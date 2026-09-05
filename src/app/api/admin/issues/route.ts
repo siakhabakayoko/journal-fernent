@@ -1,28 +1,14 @@
 import { NextResponse } from "next/server";
 import { isAdminAuthenticated } from "@/lib/auth";
-import {
-  deleteArticle,
-  getArticles,
-  slugify,
-  upsertArticle,
-} from "@/lib/articles";
-import type { Article, Rubric } from "@/lib/types";
-
-const RUBRICS: Rubric[] = [
-  "senegal",
-  "afrique",
-  "international",
-  "economie",
-  "social",
-  "notre-journal",
-];
+import { deleteIssue, getIssues, slugify, upsertIssue } from "@/lib/issues";
+import type { MonthlyIssue } from "@/lib/types";
 
 export async function GET() {
   if (!(await isAdminAuthenticated())) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
-  const articles = await getArticles();
-  return NextResponse.json({ articles });
+  const issues = await getIssues();
+  return NextResponse.json({ issues });
 }
 
 export async function POST(request: Request) {
@@ -33,25 +19,28 @@ export async function POST(request: Request) {
   if (!body || typeof body.title !== "string") {
     return NextResponse.json({ error: "invalid" }, { status: 400 });
   }
-  const rubric = RUBRICS.includes(body.rubric) ? (body.rubric as Rubric) : "senegal";
-  const coverImage = String(body.coverImage || "").trim() || undefined;
-  const article: Article = {
-    id: typeof body.id === "string" && body.id ? body.id : `a_${Date.now().toString(36)}`,
+  const month = Math.min(12, Math.max(1, Number(body.month) || 1));
+  const year = Number(body.year) || new Date().getFullYear();
+  const issue: MonthlyIssue = {
+    id:
+      typeof body.id === "string" && body.id
+        ? body.id
+        : `iss_${Date.now().toString(36)}`,
     slug:
       typeof body.slug === "string" && body.slug.trim()
         ? slugify(body.slug)
         : slugify(body.title),
     title: body.title.trim(),
-    excerpt: String(body.excerpt || "").trim(),
-    body: String(body.body || "").trim(),
-    rubric,
-    author: String(body.author || "Rédaction Ferñent").trim(),
-    publishedAt: String(body.publishedAt || new Date().toISOString().slice(0, 10)),
-    featured: Boolean(body.featured),
-    commentsEnabled: body.commentsEnabled !== false,
-    coverImage,
+    month,
+    year,
+    description: String(body.description || "").trim() || undefined,
+    pdfUrl: String(body.pdfUrl || "").trim(),
+    coverImage: String(body.coverImage || "").trim() || undefined,
+    publishedAt: String(
+      body.publishedAt || `${year}-${String(month).padStart(2, "0")}-01`,
+    ),
   };
-  const result = await upsertArticle(article);
+  const result = await upsertIssue(issue);
   return NextResponse.json(result);
 }
 
@@ -62,7 +51,7 @@ export async function DELETE(request: Request) {
   const { searchParams } = new URL(request.url);
   const id = searchParams.get("id");
   if (!id) return NextResponse.json({ error: "invalid" }, { status: 400 });
-  const result = await deleteArticle(id);
+  const result = await deleteIssue(id);
   if (!result.ok) return NextResponse.json({ error: "not_found" }, { status: 404 });
   return NextResponse.json(result);
 }

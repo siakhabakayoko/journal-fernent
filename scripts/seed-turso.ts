@@ -1,5 +1,5 @@
 /**
- * Seed Turso from content/*.json when the articles table is empty.
+ * Seed Turso from content/*.json when tables are empty.
  * Usage: bun run scripts/seed-turso.ts
  * Requires TURSO_DATABASE_URL + TURSO_AUTH_TOKEN.
  */
@@ -18,10 +18,12 @@ async function main() {
   const articles = await db.execute("SELECT COUNT(*) AS n FROM articles");
   const comments = await db.execute("SELECT COUNT(*) AS n FROM comments");
   const newsletter = await db.execute("SELECT COUNT(*) AS n FROM newsletter");
+  const issues = await db.execute("SELECT COUNT(*) AS n FROM issues");
   console.log("Turso seed complete:");
   console.log(`  articles:   ${articles.rows[0]?.n}`);
   console.log(`  comments:   ${comments.rows[0]?.n}`);
   console.log(`  newsletter: ${newsletter.rows[0]?.n}`);
+  console.log(`  issues:     ${issues.rows[0]?.n}`);
 }
 
 main().catch((err) => {

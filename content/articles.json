@@ -9,7 +9,8 @@
     "author": "Rédaction Ferñent",
     "publishedAt": "2025-09-02",
     "featured": true,
-    "commentsEnabled": true
+    "commentsEnabled": true,
+    "coverImage": "/covers/dette.svg"
   },
   {
     "id": "a2",
@@ -21,7 +22,8 @@
     "author": "Aminata Diop",
     "publishedAt": "2025-09-01",
     "featured": true,
-    "commentsEnabled": true
+    "commentsEnabled": true,
+    "coverImage": "/covers/syndicat.svg"
   },
   {
     "id": "a3",
@@ -33,7 +35,8 @@
     "author": "Fatou Ndiaye",
     "publishedAt": "2025-08-28",
     "featured": true,
-    "commentsEnabled": true
+    "commentsEnabled": true,
+    "coverImage": "/covers/femmes.svg"
   },
   {
     "id": "a4",
@@ -45,7 +48,8 @@
     "author": "Ibrahima Sarr",
     "publishedAt": "2025-08-25",
     "featured": false,
-    "commentsEnabled": true
+    "commentsEnabled": true,
+    "coverImage": "/covers/riz.svg"
   },
   {
     "id": "a5",
@@ -57,7 +61,8 @@
     "author": "Rédaction Ferñent",
     "publishedAt": "2025-08-20",
     "featured": false,
-    "commentsEnabled": true
+    "commentsEnabled": true,
+    "coverImage": "/covers/sahel.svg"
   },
   {
     "id": "a6",

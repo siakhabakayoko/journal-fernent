@@ -21,6 +21,8 @@ function cloneSeed(): Article[] {
 }
 
 function rowToArticle(row: Record<string, unknown>): Article {
+  const cover =
+    row.cover_image ?? row.coverImage ?? undefined;
   return {
     id: String(row.id),
     slug: String(row.slug),
@@ -32,8 +34,15 @@ function rowToArticle(row: Record<string, unknown>): Article {
     publishedAt: String(row.published_at ?? row.publishedAt ?? ""),
     featured: Boolean(Number(row.featured ?? 0)),
     commentsEnabled: Number(row.comments_enabled ?? row.commentsEnabled ?? 1) !== 0,
+    coverImage:
+      cover !== undefined && cover !== null && String(cover).trim()
+        ? String(cover)
+        : undefined,
   };
 }
+
+const ARTICLE_SELECT =
+  "id, slug, title, excerpt, body, rubric, author, published_at, featured, comments_enabled, cover_image";
 
 async function readFromDisk(): Promise<Article[] | null> {
   try {
@@ -48,7 +57,7 @@ async function getArticlesFromTurso(): Promise<Article[]> {
   await ensureSeeded();
   const db = getTursoClient();
   const result = await db.execute(
-    "SELECT id, slug, title, excerpt, body, rubric, author, published_at, featured, comments_enabled FROM articles ORDER BY published_at DESC",
+    `SELECT ${ARTICLE_SELECT} FROM articles ORDER BY published_at DESC`,
   );
   return result.rows.map((r) => rowToArticle(r as Record<string, unknown>));
 }
@@ -73,13 +82,11 @@ async function persist(
   if (isTursoConfigured()) {
     await ensureSchema();
     const db = getTursoClient();
-    // Full replace of known set is awkward; callers use upsert/delete.
-    // This path is only used by JSON fallback upsert flow.
     for (const a of articles) {
       await db.execute({
         sql: `INSERT INTO articles
-          (id, slug, title, excerpt, body, rubric, author, published_at, featured, comments_enabled)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          (id, slug, title, excerpt, body, rubric, author, published_at, featured, comments_enabled, cover_image)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           ON CONFLICT(id) DO UPDATE SET
             slug=excluded.slug,
             title=excluded.title,
@@ -89,7 +96,8 @@ async function persist(
             author=excluded.author,
             published_at=excluded.published_at,
             featured=excluded.featured,
-            comments_enabled=excluded.comments_enabled`,
+            comments_enabled=excluded.comments_enabled,
+            cover_image=excluded.cover_image`,
         args: [
           a.id,
           a.slug,
@@ -101,6 +109,7 @@ async function persist(
           a.publishedAt,
           a.featured ? 1 : 0,
           a.commentsEnabled ? 1 : 0,
+          a.coverImage ?? null,
         ],
       });
     }
@@ -124,8 +133,7 @@ export async function getArticleBySlug(
       await ensureSeeded();
       const db = getTursoClient();
       const result = await db.execute({
-        sql: `SELECT id, slug, title, excerpt, body, rubric, author, published_at, featured, comments_enabled
-              FROM articles WHERE slug = ? LIMIT 1`,
+        sql: `SELECT ${ARTICLE_SELECT} FROM articles WHERE slug = ? LIMIT 1`,
         args: [slug],
       });
       if (result.rows[0]) {
@@ -170,8 +178,8 @@ export async function upsertArticle(
       const db = getTursoClient();
       await db.execute({
         sql: `INSERT INTO articles
-          (id, slug, title, excerpt, body, rubric, author, published_at, featured, comments_enabled)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          (id, slug, title, excerpt, body, rubric, author, published_at, featured, comments_enabled, cover_image)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           ON CONFLICT(id) DO UPDATE SET
             slug=excluded.slug,
             title=excluded.title,
@@ -181,7 +189,8 @@ export async function upsertArticle(
             author=excluded.author,
             published_at=excluded.published_at,
             featured=excluded.featured,
-            comments_enabled=excluded.comments_enabled`,
+            comments_enabled=excluded.comments_enabled,
+            cover_image=excluded.cover_image`,
         args: [
           article.id,
           article.slug,
@@ -193,6 +202,7 @@ export async function upsertArticle(
           article.publishedAt,
           article.featured ? 1 : 0,
           article.commentsEnabled ? 1 : 0,
+          article.coverImage ?? null,
         ],
       });
       return { article, mode: "turso" };

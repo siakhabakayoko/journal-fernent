@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import type { Article } from "@/lib/types";
 import { useLanguage } from "@/lib/i18n/LanguageProvider";
@@ -11,9 +12,23 @@ export function ArticleChrome({ article }: { article: Article }) {
     month: "long",
     year: "numeric",
   }).format(new Date(article.publishedAt));
+  const cover = article.coverImage?.trim();
 
   return (
     <header className="border-b border-rule pb-6">
+      {cover && (
+        <div className="relative mb-6 aspect-[16/9] w-full overflow-hidden border border-rule bg-rule">
+          <Image
+            src={cover}
+            alt=""
+            fill
+            className="object-cover"
+            sizes="(max-width: 768px) 100vw, 768px"
+            priority
+            unoptimized={cover.endsWith(".svg")}
+          />
+        </div>
+      )}
       <div className="flex flex-wrap items-center gap-2 text-xs">
         <Link
           href={`/rubrique/${article.rubric}`}

@@ -17,6 +17,20 @@ export type Article = {
   publishedAt: string;
   featured: boolean;
   commentsEnabled: boolean;
+  /** Optional cover image URL or local path (e.g. /covers/… or /uploads/…). */
+  coverImage?: string;
+};
+
+export type MonthlyIssue = {
+  id: string;
+  slug: string;
+  title: string;
+  month: number;
+  year: number;
+  description?: string;
+  pdfUrl: string;
+  coverImage?: string;
+  publishedAt: string;
 };
 
 export type Video = {
