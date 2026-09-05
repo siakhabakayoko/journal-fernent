@@ -76,7 +76,8 @@ CREATE TABLE IF NOT EXISTS videos (
   youtube_id TEXT,
   video_url TEXT,
   thumbnail_url TEXT,
-  placeholder INTEGER NOT NULL DEFAULT 1
+  placeholder INTEGER NOT NULL DEFAULT 1,
+  rubric TEXT
 );
 
 CREATE TABLE IF NOT EXISTS contact_messages (
@@ -113,6 +114,11 @@ async function migrateColumns(db: Client): Promise<void> {
   }
   try {
     await db.execute("ALTER TABLE comments ADD COLUMN hidden INTEGER NOT NULL DEFAULT 0");
+  } catch {
+    /* column may already exist */
+  }
+  try {
+    await db.execute("ALTER TABLE videos ADD COLUMN rubric TEXT");
   } catch {
     /* column may already exist */
   }
@@ -259,12 +265,13 @@ export async function ensureSeeded(): Promise<void> {
           videoUrl?: string;
           thumbnailUrl?: string;
           placeholder?: boolean;
+          rubric?: string;
         }>) {
           const hasMedia = Boolean(v.youtubeId || v.youtubeUrl || v.videoUrl);
           await db.execute({
             sql: `INSERT OR IGNORE INTO videos
-              (id, title, description, published_at, duration, youtube_url, youtube_id, video_url, thumbnail_url, placeholder)
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+              (id, title, description, published_at, duration, youtube_url, youtube_id, video_url, thumbnail_url, placeholder, rubric)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             args: [
               v.id,
               v.title,
@@ -276,9 +283,25 @@ export async function ensureSeeded(): Promise<void> {
               v.videoUrl ?? null,
               v.thumbnailUrl ?? null,
               hasMedia ? 0 : v.placeholder !== false ? 1 : 0,
+              v.rubric ?? null,
             ],
           });
         }
+      }
+
+      // Backfill video rubrics from seed when column is empty (existing DBs).
+      try {
+        const { default: videoSeed } = await import("../../content/videos.json");
+        for (const v of videoSeed as Array<{ id: string; rubric?: string }>) {
+          if (!v.rubric) continue;
+          await db.execute({
+            sql: `UPDATE videos SET rubric = ?
+                   WHERE id = ? AND (rubric IS NULL OR rubric = '')`,
+            args: [v.rubric, v.id],
+          });
+        }
+      } catch {
+        /* seed missing or update failed — non-fatal */
       }
 
       const contactCount = await db.execute(

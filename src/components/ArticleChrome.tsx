@@ -31,7 +31,7 @@ export function ArticleChrome({ article }: { article: Article }) {
       )}
       <div className="flex flex-wrap items-center gap-2 text-xs">
         <Link
-          href={`/rubrique/${article.rubric}`}
+          href={`/breves?r=${article.rubric}`}
           className="kicker hover:underline"
         >
           {t.nav[article.rubric]}

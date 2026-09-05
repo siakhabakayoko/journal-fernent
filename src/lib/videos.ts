@@ -1,6 +1,7 @@
 import { promises as fs } from "fs";
 import path from "path";
-import type { Video } from "./types";
+import type { Rubric, Video } from "./types";
+import { isRubric } from "./types";
 import seed from "../../content/videos.json";
 import {
   ensureSchema,
@@ -57,6 +58,8 @@ export function normalizeVideo(partial: Partial<Video> & Pick<Video, "id" | "tit
   const videoUrl = String(partial.videoUrl || "").trim() || undefined;
   const thumbnailUrl = String(partial.thumbnailUrl || "").trim() || undefined;
   const hasMedia = Boolean(youtubeId || videoUrl);
+  const rubricRaw = partial.rubric != null ? String(partial.rubric).trim() : "";
+  const rubric: Rubric | undefined = isRubric(rubricRaw) ? rubricRaw : undefined;
   return {
     id: partial.id,
     title: partial.title.trim(),
@@ -69,6 +72,7 @@ export function normalizeVideo(partial: Partial<Video> & Pick<Video, "id" | "tit
     youtubeId,
     videoUrl,
     thumbnailUrl,
+    rubric,
     placeholder: hasMedia ? false : partial.placeholder !== false,
   };
 }
@@ -110,12 +114,16 @@ function rowToVideo(row: Record<string, unknown>): Video {
         : row.thumbnailUrl != null
           ? String(row.thumbnailUrl)
           : undefined,
+    rubric:
+      row.rubric != null && String(row.rubric).trim()
+        ? (String(row.rubric) as Rubric)
+        : undefined,
     placeholder: Number(row.placeholder ?? 1) !== 0,
   });
 }
 
 const VIDEO_SELECT =
-  "id, title, description, published_at, duration, youtube_url, youtube_id, video_url, thumbnail_url, placeholder";
+  "id, title, description, published_at, duration, youtube_url, youtube_id, video_url, thumbnail_url, placeholder, rubric";
 
 async function readFromDisk(): Promise<Video[] | null> {
   try {
@@ -156,8 +164,8 @@ async function persist(videos: Video[]): Promise<{ mode: PersistMode }> {
     for (const v of videos) {
       await db.execute({
         sql: `INSERT INTO videos
-          (id, title, description, published_at, duration, youtube_url, youtube_id, video_url, thumbnail_url, placeholder)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          (id, title, description, published_at, duration, youtube_url, youtube_id, video_url, thumbnail_url, placeholder, rubric)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           ON CONFLICT(id) DO UPDATE SET
             title=excluded.title,
             description=excluded.description,
@@ -167,7 +175,8 @@ async function persist(videos: Video[]): Promise<{ mode: PersistMode }> {
             youtube_id=excluded.youtube_id,
             video_url=excluded.video_url,
             thumbnail_url=excluded.thumbnail_url,
-            placeholder=excluded.placeholder`,
+            placeholder=excluded.placeholder,
+            rubric=excluded.rubric`,
         args: [
           v.id,
           v.title,
@@ -179,6 +188,7 @@ async function persist(videos: Video[]): Promise<{ mode: PersistMode }> {
           v.videoUrl ?? null,
           v.thumbnailUrl ?? null,
           v.placeholder ? 1 : 0,
+          v.rubric ?? null,
         ],
       });
     }
@@ -204,8 +214,8 @@ export async function upsertVideo(
       const db = getTursoClient();
       await db.execute({
         sql: `INSERT INTO videos
-          (id, title, description, published_at, duration, youtube_url, youtube_id, video_url, thumbnail_url, placeholder)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          (id, title, description, published_at, duration, youtube_url, youtube_id, video_url, thumbnail_url, placeholder, rubric)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           ON CONFLICT(id) DO UPDATE SET
             title=excluded.title,
             description=excluded.description,
@@ -215,7 +225,8 @@ export async function upsertVideo(
             youtube_id=excluded.youtube_id,
             video_url=excluded.video_url,
             thumbnail_url=excluded.thumbnail_url,
-            placeholder=excluded.placeholder`,
+            placeholder=excluded.placeholder,
+            rubric=excluded.rubric`,
         args: [
           normalized.id,
           normalized.title,
@@ -227,6 +238,7 @@ export async function upsertVideo(
           normalized.videoUrl ?? null,
           normalized.thumbnailUrl ?? null,
           normalized.placeholder ? 1 : 0,
+          normalized.rubric ?? null,
         ],
       });
       return { video: normalized, mode: "turso" };

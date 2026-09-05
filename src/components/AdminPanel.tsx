@@ -58,6 +58,7 @@ type VideoDraft = {
   youtubeUrl: string;
   videoUrl: string;
   thumbnailUrl: string;
+  rubric: Rubric | "";
 };
 
 function extractYoutubeIdClient(input: string): string | undefined {
@@ -133,6 +134,7 @@ const emptyVideoDraft = (): VideoDraft => ({
   youtubeUrl: "",
   videoUrl: "",
   thumbnailUrl: "",
+  rubric: "",
 });
 
 async function uploadFile(file: File): Promise<{ url?: string; error?: string }> {
@@ -1215,6 +1217,28 @@ export function AdminPanel({
               </div>
               <div>
                 <label className="block text-xs font-semibold mb-1">
+                  {t.admin.fields.rubric}
+                </label>
+                <select
+                  value={videoDraft.rubric}
+                  onChange={(e) =>
+                    setVideoDraft({
+                      ...videoDraft,
+                      rubric: e.target.value as Rubric | "",
+                    })
+                  }
+                  className="w-full border border-rule-strong px-3 py-2 text-sm"
+                >
+                  <option value="">—</option>
+                  {RUBRIC_OPTIONS.map((r) => (
+                    <option key={r} value={r}>
+                      {t.nav[r]}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold mb-1">
                   {t.admin.fields.youtubeUrl}
                 </label>
                 <input
@@ -1393,6 +1417,7 @@ export function AdminPanel({
                         <div className="text-xs text-neutral-500">
                           {v.publishedAt}
                           {v.duration ? ` · ${v.duration}` : ""}
+                          {v.rubric ? ` · ${t.nav[v.rubric]}` : ""}
                           {v.youtubeId
                             ? " · YouTube"
                             : v.videoUrl
@@ -1415,6 +1440,7 @@ export function AdminPanel({
                             youtubeUrl: v.youtubeUrl || "",
                             videoUrl: v.videoUrl || "",
                             thumbnailUrl: v.thumbnailUrl || "",
+                            rubric: v.rubric || "",
                           })
                         }
                       >

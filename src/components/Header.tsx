@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Logo } from "./Logo";
 import { useLanguage } from "@/lib/i18n/LanguageProvider";
-import { RUBRICS } from "@/lib/types";
 
 function MastheadDate() {
   const { locale } = useLanguage();
@@ -33,16 +32,13 @@ export function Header() {
   const { t, locale, setLocale } = useLanguage();
   const [open, setOpen] = useState(false);
 
-  const rubricLinks = RUBRICS.map((r) => ({
-    href: r.href,
-    label: t.nav[r.slug],
-  }));
-
-  const extra = [
-    { href: "/videos", label: t.nav.videos },
-    { href: "/archives", label: t.nav.archives },
-    { href: "/contact", label: t.nav.contact },
+  const primary = [
+    { href: "/breves", label: t.nav.breves },
+    { href: "/mensuel", label: t.nav.mensuel },
+    { href: "/capsules", label: t.nav.capsules },
   ];
+
+  const secondary = [{ href: "/contact", label: t.nav.contact }];
 
   return (
     <header className="sticky top-0 z-50 bg-paper/95 backdrop-blur-md border-b border-rule">
@@ -118,12 +114,12 @@ export function Header() {
           <div className="rule-double-inner" />
         </div>
 
-        {/* Desktop: ALL rubrics visible as one-click links */}
+        {/* Desktop: content-type nav */}
         <nav
           className="hidden md:flex flex-wrap items-center justify-center gap-x-0.5 gap-y-1 py-2 text-[0.8rem] font-bold uppercase tracking-[0.08em]"
-          aria-label="Rubriques"
+          aria-label="Navigation"
         >
-          {rubricLinks.map((item) => (
+          {primary.map((item) => (
             <Link
               key={item.href}
               href={item.href}
@@ -133,7 +129,7 @@ export function Header() {
             </Link>
           ))}
           <span className="mx-1.5 h-3.5 w-px bg-rule-strong" aria-hidden />
-          {extra.map((item) => (
+          {secondary.map((item) => (
             <Link
               key={item.href}
               href={item.href}
@@ -150,7 +146,7 @@ export function Header() {
             id="mobile-nav"
             className="md:hidden border-t border-rule py-2 pb-3 flex flex-col gap-0.5"
           >
-            {[...rubricLinks, ...extra].map((item) => (
+            {[...primary, ...secondary].map((item) => (
               <Link
                 key={item.href}
                 href={item.href}

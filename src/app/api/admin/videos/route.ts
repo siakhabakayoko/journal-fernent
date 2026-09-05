@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { isAdminAuthenticated } from "@/lib/auth";
 import { deleteVideo, getVideos, normalizeVideo, upsertVideo } from "@/lib/videos";
-import type { Video } from "@/lib/types";
+import { isRubric, type Video } from "@/lib/types";
 
 export async function GET() {
   if (!(await isAdminAuthenticated())) {
@@ -34,6 +34,10 @@ export async function POST(request: Request) {
     youtubeId: String(body.youtubeId || "").trim() || undefined,
     videoUrl: String(body.videoUrl || "").trim() || undefined,
     thumbnailUrl: String(body.thumbnailUrl || "").trim() || undefined,
+    rubric: (() => {
+      const r = String(body.rubric || "").trim();
+      return isRubric(r) ? r : undefined;
+    })(),
     placeholder: body.placeholder,
   });
   const result = await upsertVideo(video);

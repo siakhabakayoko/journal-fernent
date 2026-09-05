@@ -62,7 +62,7 @@ export function ArticleCard({
       <article className="group border-b border-rule py-3.5 last:border-b-0">
         <div className="flex items-center gap-2 text-[0.65rem]">
           <Link
-            href={`/rubrique/${article.rubric}`}
+            href={`/breves?r=${article.rubric}`}
             className="kicker hover:underline"
           >
             {rubricLabel}

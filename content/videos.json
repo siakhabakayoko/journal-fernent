@@ -8,7 +8,8 @@
     "youtubeUrl": "https://www.youtube.com/watch?v=8W9PgikejGk",
     "youtubeId": "8W9PgikejGk",
     "thumbnailUrl": "https://i.ytimg.com/vi/8W9PgikejGk/hqdefault.jpg",
-    "placeholder": false
+    "placeholder": false,
+    "rubric": "economie"
   },
   {
     "id": "yt_4OY-NiHUxJs",
@@ -19,7 +20,8 @@
     "youtubeUrl": "https://www.youtube.com/watch?v=4OY-NiHUxJs",
     "youtubeId": "4OY-NiHUxJs",
     "thumbnailUrl": "https://i.ytimg.com/vi/4OY-NiHUxJs/hqdefault.jpg",
-    "placeholder": false
+    "placeholder": false,
+    "rubric": "economie"
   },
   {
     "id": "yt_RzxKzBtbTTA",
@@ -30,7 +32,8 @@
     "youtubeUrl": "https://www.youtube.com/watch?v=RzxKzBtbTTA",
     "youtubeId": "RzxKzBtbTTA",
     "thumbnailUrl": "https://i.ytimg.com/vi/RzxKzBtbTTA/hqdefault.jpg",
-    "placeholder": false
+    "placeholder": false,
+    "rubric": "economie"
   },
   {
     "id": "yt_FksoLaZr9BU",
@@ -41,7 +44,8 @@
     "youtubeUrl": "https://www.youtube.com/watch?v=FksoLaZr9BU",
     "youtubeId": "FksoLaZr9BU",
     "thumbnailUrl": "https://i.ytimg.com/vi/FksoLaZr9BU/hqdefault.jpg",
-    "placeholder": false
+    "placeholder": false,
+    "rubric": "economie"
   },
   {
     "id": "yt_fux0ENlhGKw",
@@ -52,7 +56,8 @@
     "youtubeUrl": "https://www.youtube.com/watch?v=fux0ENlhGKw",
     "youtubeId": "fux0ENlhGKw",
     "thumbnailUrl": "https://i.ytimg.com/vi/fux0ENlhGKw/hqdefault.jpg",
-    "placeholder": false
+    "placeholder": false,
+    "rubric": "economie"
   },
   {
     "id": "yt_b_J3cYnMQE8",
@@ -63,7 +68,8 @@
     "youtubeUrl": "https://www.youtube.com/watch?v=b_J3cYnMQE8",
     "youtubeId": "b_J3cYnMQE8",
     "thumbnailUrl": "https://i.ytimg.com/vi/b_J3cYnMQE8/hqdefault.jpg",
-    "placeholder": false
+    "placeholder": false,
+    "rubric": "senegal"
   },
   {
     "id": "yt_sTFGP4uQye8",
@@ -74,7 +80,8 @@
     "youtubeUrl": "https://www.youtube.com/watch?v=sTFGP4uQye8",
     "youtubeId": "sTFGP4uQye8",
     "thumbnailUrl": "https://i.ytimg.com/vi/sTFGP4uQye8/hqdefault.jpg",
-    "placeholder": false
+    "placeholder": false,
+    "rubric": "senegal"
   },
   {
     "id": "yt_EpfVaEBg9hg",
@@ -85,7 +92,8 @@
     "youtubeUrl": "https://www.youtube.com/watch?v=EpfVaEBg9hg",
     "youtubeId": "EpfVaEBg9hg",
     "thumbnailUrl": "https://i.ytimg.com/vi/EpfVaEBg9hg/hqdefault.jpg",
-    "placeholder": false
+    "placeholder": false,
+    "rubric": "afrique"
   },
   {
     "id": "yt_WrsE_UkfEQ4",
@@ -96,7 +104,8 @@
     "youtubeUrl": "https://www.youtube.com/watch?v=WrsE_UkfEQ4",
     "youtubeId": "WrsE_UkfEQ4",
     "thumbnailUrl": "https://i.ytimg.com/vi/WrsE_UkfEQ4/hqdefault.jpg",
-    "placeholder": false
+    "placeholder": false,
+    "rubric": "afrique"
   },
   {
     "id": "yt_2_4x1RR8fB8",
@@ -107,7 +116,8 @@
     "youtubeUrl": "https://www.youtube.com/watch?v=2_4x1RR8fB8",
     "youtubeId": "2_4x1RR8fB8",
     "thumbnailUrl": "https://i.ytimg.com/vi/2_4x1RR8fB8/hqdefault.jpg",
-    "placeholder": false
+    "placeholder": false,
+    "rubric": "senegal"
   },
   {
     "id": "yt_na_LeNPxSQA",
@@ -118,7 +128,8 @@
     "youtubeUrl": "https://www.youtube.com/watch?v=na_LeNPxSQA",
     "youtubeId": "na_LeNPxSQA",
     "thumbnailUrl": "https://i.ytimg.com/vi/na_LeNPxSQA/hqdefault.jpg",
-    "placeholder": false
+    "placeholder": false,
+    "rubric": "international"
   },
   {
     "id": "yt_6h_T8GMqO1Y",
@@ -129,6 +140,7 @@
     "youtubeUrl": "https://www.youtube.com/watch?v=6h_T8GMqO1Y",
     "youtubeId": "6h_T8GMqO1Y",
     "thumbnailUrl": "https://i.ytimg.com/vi/6h_T8GMqO1Y/hqdefault.jpg",
-    "placeholder": false
+    "placeholder": false,
+    "rubric": "international"
   }
 ]

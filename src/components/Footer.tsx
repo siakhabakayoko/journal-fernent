@@ -39,13 +39,18 @@ export function Footer() {
             <p className="kicker !text-fernent-red mb-3">Explorer</p>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link href="/videos" className="text-white/80 hover:text-white transition-colors">
-                  {t.nav.videos}
+                <Link href="/breves" className="text-white/80 hover:text-white transition-colors">
+                  {t.nav.breves}
                 </Link>
               </li>
               <li>
-                <Link href="/archives" className="text-white/80 hover:text-white transition-colors">
-                  {t.nav.archives}
+                <Link href="/mensuel" className="text-white/80 hover:text-white transition-colors">
+                  {t.nav.mensuel}
+                </Link>
+              </li>
+              <li>
+                <Link href="/capsules" className="text-white/80 hover:text-white transition-colors">
+                  {t.nav.capsules}
                 </Link>
               </li>
               <li>

@@ -43,6 +43,8 @@ export type Video = {
   youtubeId?: string;
   videoUrl?: string;
   thumbnailUrl?: string;
+  /** Optional content rubric for Capsules tabs. */
+  rubric?: Rubric;
   /** true when neither youtube nor videoUrl */
   placeholder?: boolean;
 };
@@ -75,16 +77,25 @@ export type BannedKeyword = {
   createdAt: string;
 };
 
-export const RUBRICS: { slug: Rubric; href: string }[] = [
-  { slug: "senegal", href: "/rubrique/senegal" },
-  { slug: "afrique", href: "/rubrique/afrique" },
-  { slug: "international", href: "/rubrique/international" },
-  { slug: "economie", href: "/rubrique/economie" },
-  { slug: "social", href: "/rubrique/social" },
-  { slug: "notre-journal", href: "/rubrique/notre-journal" },
+/** Public rubrics shown as content tabs (Brèves / Capsules). */
+export const PUBLIC_RUBRICS: Rubric[] = [
+  "senegal",
+  "afrique",
+  "international",
+  "economie",
+  "social",
+  "notre-journal",
 ];
+
+export const RUBRICS: { slug: Rubric; href: string }[] = PUBLIC_RUBRICS.map(
+  (slug) => ({ slug, href: `/breves?r=${slug}` }),
+);
 
 export const MOTTO =
   "Union libre des peuples libres d'Afrique. Solidarité internationaliste des travailleurs";
 
 export const CONTACT_EMAIL = "fernentbirane@gmail.com";
+
+export function isRubric(value: string): value is Rubric {
+  return (PUBLIC_RUBRICS as string[]).includes(value);
+}

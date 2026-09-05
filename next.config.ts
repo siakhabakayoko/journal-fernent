@@ -13,6 +13,17 @@ const nextConfig: NextConfig = {
       { protocol: "http", hostname: "127.0.0.1" },
     ],
   },
+  async redirects() {
+    return [
+      { source: "/archives", destination: "/mensuel", permanent: true },
+      { source: "/videos", destination: "/capsules", permanent: true },
+      {
+        source: "/rubrique/:slug",
+        destination: "/breves?r=:slug",
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;
