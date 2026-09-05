@@ -38,8 +38,13 @@ export type Video = {
   title: string;
   description: string;
   publishedAt: string;
-  duration: string;
-  placeholder: boolean;
+  duration?: string;
+  youtubeUrl?: string;
+  youtubeId?: string;
+  videoUrl?: string;
+  thumbnailUrl?: string;
+  /** true when neither youtube nor videoUrl */
+  placeholder?: boolean;
 };
 
 export type Comment = {

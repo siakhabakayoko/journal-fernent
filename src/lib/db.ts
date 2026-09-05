@@ -65,10 +65,24 @@ CREATE TABLE IF NOT EXISTS issues (
   published_at TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS videos (
+  id TEXT PRIMARY KEY,
+  title TEXT NOT NULL,
+  description TEXT NOT NULL DEFAULT '',
+  published_at TEXT NOT NULL,
+  duration TEXT,
+  youtube_url TEXT,
+  youtube_id TEXT,
+  video_url TEXT,
+  thumbnail_url TEXT,
+  placeholder INTEGER NOT NULL DEFAULT 1
+);
+
 CREATE INDEX IF NOT EXISTS idx_comments_article_id ON comments(article_id);
 CREATE INDEX IF NOT EXISTS idx_articles_rubric ON articles(rubric);
 CREATE INDEX IF NOT EXISTS idx_articles_published_at ON articles(published_at);
 CREATE INDEX IF NOT EXISTS idx_issues_year_month ON issues(year, month);
+CREATE INDEX IF NOT EXISTS idx_videos_published_at ON videos(published_at);
 `;
 
 async function migrateColumns(db: Client): Promise<void> {
@@ -202,6 +216,42 @@ export async function ensureSeeded(): Promise<void> {
               iss.pdfUrl ?? "",
               iss.coverImage ?? null,
               iss.publishedAt,
+            ],
+          });
+        }
+      }
+
+      const videoCount = await db.execute("SELECT COUNT(*) AS n FROM videos");
+      if (Number(videoCount.rows[0]?.n ?? 0) === 0) {
+        const { default: videos } = await import("../../content/videos.json");
+        for (const v of videos as Array<{
+          id: string;
+          title: string;
+          description: string;
+          publishedAt: string;
+          duration?: string;
+          youtubeUrl?: string;
+          youtubeId?: string;
+          videoUrl?: string;
+          thumbnailUrl?: string;
+          placeholder?: boolean;
+        }>) {
+          const hasMedia = Boolean(v.youtubeId || v.youtubeUrl || v.videoUrl);
+          await db.execute({
+            sql: `INSERT OR IGNORE INTO videos
+              (id, title, description, published_at, duration, youtube_url, youtube_id, video_url, thumbnail_url, placeholder)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            args: [
+              v.id,
+              v.title,
+              v.description ?? "",
+              v.publishedAt,
+              v.duration ?? null,
+              v.youtubeUrl ?? null,
+              v.youtubeId ?? null,
+              v.videoUrl ?? null,
+              v.thumbnailUrl ?? null,
+              hasMedia ? 0 : v.placeholder !== false ? 1 : 0,
             ],
           });
         }

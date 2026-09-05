@@ -14,6 +14,10 @@ const ALLOWED_EXT = new Set([
   ".webp",
   ".svg",
   ".pdf",
+  ".mp4",
+  ".webm",
+  ".ogg",
+  ".mov",
 ]);
 
 function safeName(original: string): string {
@@ -48,7 +52,7 @@ export async function POST(request: Request) {
   const ext = path.extname(blob.name || "").toLowerCase() || guessExt(blob.type);
   if (!ALLOWED_EXT.has(ext)) {
     return NextResponse.json(
-      { error: "unsupported_type", message: "Images (jpg/png/gif/webp/svg) ou PDF uniquement." },
+      { error: "unsupported_type", message: "Images, PDF ou vidéo (mp4/webm/ogg/mov) uniquement." },
       { status: 400 },
     );
   }
@@ -96,5 +100,9 @@ function guessExt(mime: string): string {
   if (mime === "image/gif") return ".gif";
   if (mime === "image/webp") return ".webp";
   if (mime === "image/svg+xml") return ".svg";
+  if (mime === "video/mp4") return ".mp4";
+  if (mime === "video/webm") return ".webm";
+  if (mime === "video/ogg") return ".ogg";
+  if (mime === "video/quicktime") return ".mov";
   return "";
 }

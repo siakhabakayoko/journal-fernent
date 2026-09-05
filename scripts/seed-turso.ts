@@ -19,11 +19,13 @@ async function main() {
   const comments = await db.execute("SELECT COUNT(*) AS n FROM comments");
   const newsletter = await db.execute("SELECT COUNT(*) AS n FROM newsletter");
   const issues = await db.execute("SELECT COUNT(*) AS n FROM issues");
+  const videos = await db.execute("SELECT COUNT(*) AS n FROM videos");
   console.log("Turso seed complete:");
   console.log(`  articles:   ${articles.rows[0]?.n}`);
   console.log(`  comments:   ${comments.rows[0]?.n}`);
   console.log(`  newsletter: ${newsletter.rows[0]?.n}`);
   console.log(`  issues:     ${issues.rows[0]?.n}`);
+  console.log(`  videos:     ${videos.rows[0]?.n}`);
 }
 
 main().catch((err) => {
