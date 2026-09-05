@@ -1,8 +1,17 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
-import type { Article, MonthlyIssue, Rubric, Video } from "@/lib/types";
+import type {
+  Article,
+  MonthlyIssue,
+  Rubric,
+  Video,
+  ContactMessage,
+  BannedKeyword,
+  Comment,
+  ContactMessageStatus,
+} from "@/lib/types";
 import { useLanguage } from "@/lib/i18n/LanguageProvider";
 
 const RUBRIC_OPTIONS: Rubric[] = [
@@ -159,7 +168,15 @@ export function AdminPanel({
   const [articles, setArticles] = useState(initialArticles);
   const [issues, setIssues] = useState(initialIssues);
   const [videos, setVideos] = useState(initialVideos);
-  const [tab, setTab] = useState<"articles" | "issues" | "videos">("articles");
+  const [contactMessages, setContactMessages] = useState<ContactMessage[]>([]);
+  const [modComments, setModComments] = useState<
+    (Comment & { articleTitle?: string | null })[]
+  >([]);
+  const [bannedKeywords, setBannedKeywords] = useState<BannedKeyword[]>([]);
+  const [keywordInput, setKeywordInput] = useState("");
+  const [tab, setTab] = useState<
+    "articles" | "issues" | "videos" | "moderation"
+  >("articles");
   const [draft, setDraft] = useState<ArticleDraft | null>(null);
   const [issueDraft, setIssueDraft] = useState<IssueDraft | null>(null);
   const [videoDraft, setVideoDraft] = useState<VideoDraft | null>(null);
@@ -204,10 +221,13 @@ export function AdminPanel({
       }
       setAuthed(true);
       setPassword("");
-      const [list, iss, vids] = await Promise.all([
+      const [list, iss, vids, msgs, cmts, kws] = await Promise.all([
         fetch("/api/admin/articles"),
         fetch("/api/admin/issues"),
         fetch("/api/admin/videos"),
+        fetch("/api/admin/contact-messages"),
+        fetch("/api/admin/comments"),
+        fetch("/api/admin/banned-keywords"),
       ]);
       if (list.ok) {
         const data = await list.json();
@@ -221,6 +241,18 @@ export function AdminPanel({
         const data = await vids.json();
         setVideos(data.videos || []);
       }
+      if (msgs.ok) {
+        const data = await msgs.json();
+        setContactMessages(data.messages || []);
+      }
+      if (cmts.ok) {
+        const data = await cmts.json();
+        setModComments(data.comments || []);
+      }
+      if (kws.ok) {
+        const data = await kws.json();
+        setBannedKeywords(data.keywords || []);
+      }
     } finally {
       setPending(false);
     }
@@ -232,6 +264,9 @@ export function AdminPanel({
     setArticles([]);
     setIssues([]);
     setVideos([]);
+    setContactMessages([]);
+    setModComments([]);
+    setBannedKeywords([]);
     setDraft(null);
     setIssueDraft(null);
     setVideoDraft(null);
@@ -409,11 +444,159 @@ export function AdminPanel({
     }
   }
 
-  function clearOtherDrafts(keep: "articles" | "issues" | "videos") {
+  function clearOtherDrafts(
+    keep: "articles" | "issues" | "videos" | "moderation",
+  ) {
     if (keep !== "articles") setDraft(null);
     if (keep !== "issues") setIssueDraft(null);
     if (keep !== "videos") setVideoDraft(null);
   }
+
+  async function refreshModeration() {
+    const [msgs, cmts, kws] = await Promise.all([
+      fetch("/api/admin/contact-messages"),
+      fetch("/api/admin/comments"),
+      fetch("/api/admin/banned-keywords"),
+    ]);
+    if (msgs.ok) {
+      const data = await msgs.json();
+      setContactMessages(data.messages || []);
+    }
+    if (cmts.ok) {
+      const data = await cmts.json();
+      setModComments(data.comments || []);
+    }
+    if (kws.ok) {
+      const data = await kws.json();
+      setBannedKeywords(data.keywords || []);
+    }
+  }
+
+  async function patchMessageStatus(id: string, status: ContactMessageStatus) {
+    setPending(true);
+    setError("");
+    try {
+      const res = await fetch("/api/admin/contact-messages", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, status }),
+      });
+      if (!res.ok) {
+        setError("Échec de la mise à jour");
+        return;
+      }
+      await refreshModeration();
+    } finally {
+      setPending(false);
+    }
+  }
+
+  async function removeMessage(id: string) {
+    if (!confirm("Supprimer ce message ?")) return;
+    setPending(true);
+    try {
+      const res = await fetch(
+        `/api/admin/contact-messages?id=${encodeURIComponent(id)}`,
+        { method: "DELETE" },
+      );
+      if (!res.ok) {
+        setError("Échec de la suppression");
+        return;
+      }
+      await refreshModeration();
+    } finally {
+      setPending(false);
+    }
+  }
+
+  async function patchCommentHidden(id: string, hidden: boolean) {
+    setPending(true);
+    setError("");
+    try {
+      const res = await fetch("/api/admin/comments", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, hidden }),
+      });
+      if (!res.ok) {
+        setError("Échec de la modération");
+        return;
+      }
+      await refreshModeration();
+    } finally {
+      setPending(false);
+    }
+  }
+
+  async function removeModComment(id: string) {
+    if (!confirm("Supprimer ce commentaire ?")) return;
+    setPending(true);
+    try {
+      const res = await fetch(
+        `/api/admin/comments?id=${encodeURIComponent(id)}`,
+        { method: "DELETE" },
+      );
+      if (!res.ok) {
+        setError("Échec de la suppression");
+        return;
+      }
+      await refreshModeration();
+    } finally {
+      setPending(false);
+    }
+  }
+
+  async function addKeyword(e: React.FormEvent) {
+    e.preventDefault();
+    const word = keywordInput.trim();
+    if (!word) return;
+    setPending(true);
+    setError("");
+    try {
+      const res = await fetch("/api/admin/banned-keywords", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ word }),
+      });
+      if (!res.ok) {
+        setError("Échec de l'ajout");
+        return;
+      }
+      setKeywordInput("");
+      await refreshModeration();
+    } finally {
+      setPending(false);
+    }
+  }
+
+  async function removeKeyword(id: string) {
+    setPending(true);
+    try {
+      const res = await fetch(
+        `/api/admin/banned-keywords?id=${encodeURIComponent(id)}`,
+        { method: "DELETE" },
+      );
+      if (!res.ok) {
+        setError("Échec de la suppression");
+        return;
+      }
+      await refreshModeration();
+    } finally {
+      setPending(false);
+    }
+  }
+
+  function statusLabel(s: ContactMessageStatus) {
+    if (s === "read") return t.admin.statusRead;
+    if (s === "archived") return t.admin.statusArchived;
+    return t.admin.statusNew;
+  }
+
+  useEffect(() => {
+    if (!authed) return;
+    void refreshModeration();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authed]);
 
   if (!authed) {
     return (
@@ -474,6 +657,7 @@ export function AdminPanel({
             ["articles", t.admin.articles],
             ["issues", t.admin.issues],
             ["videos", t.admin.videos],
+            ["moderation", t.admin.moderation],
           ] as const
         ).map(([key, label]) => (
           <button
@@ -1250,6 +1434,221 @@ export function AdminPanel({
             </div>
           )}
         </>
+      )}
+
+      {tab === "moderation" && (
+        <div className="mt-6 space-y-10">
+          {/* A) Contact messages */}
+          <section>
+            <div className="flex items-end gap-4 mb-3">
+              <h2 className="font-serif text-xl font-bold">
+                {t.admin.contactMessages}
+              </h2>
+              <div className="h-px flex-1 bg-rule mb-2" />
+              <button
+                type="button"
+                onClick={() => refreshModeration()}
+                className="text-xs font-semibold border border-rule-strong px-2 py-1 hover:bg-rule"
+              >
+                Rafraîchir
+              </button>
+            </div>
+            {contactMessages.length === 0 ? (
+              <p className="text-sm text-muted">{t.admin.noMessages}</p>
+            ) : (
+              <ul className="divide-y divide-neutral-200 border border-rule">
+                {contactMessages.map((m) => (
+                  <li key={m.id} className="p-3 sm:p-4 space-y-2">
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <div>
+                        <div className="font-semibold">
+                          {m.name}{" "}
+                          <span className="font-normal text-muted">
+                            &lt;{m.email}&gt;
+                          </span>
+                        </div>
+                        {m.subject && (
+                          <div className="text-sm font-medium mt-0.5">
+                            {m.subject}
+                          </div>
+                        )}
+                        <div className="text-xs text-neutral-500 mt-0.5">
+                          {new Date(m.createdAt).toLocaleString("fr-FR")} ·{" "}
+                          <span
+                            className={
+                              m.status === "new"
+                                ? "text-fernent-red font-semibold"
+                                : ""
+                            }
+                          >
+                            {statusLabel(m.status)}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {m.status !== "read" && (
+                          <button
+                            type="button"
+                            disabled={pending}
+                            className="text-sm border border-rule-strong px-2 py-1 hover:bg-paper-elevated"
+                            onClick={() => patchMessageStatus(m.id, "read")}
+                          >
+                            {t.admin.markRead}
+                          </button>
+                        )}
+                        {m.status !== "archived" && (
+                          <button
+                            type="button"
+                            disabled={pending}
+                            className="text-sm border border-rule-strong px-2 py-1 hover:bg-paper-elevated"
+                            onClick={() =>
+                              patchMessageStatus(m.id, "archived")
+                            }
+                          >
+                            {t.admin.markArchived}
+                          </button>
+                        )}
+                        {m.status !== "new" && (
+                          <button
+                            type="button"
+                            disabled={pending}
+                            className="text-sm border border-rule-strong px-2 py-1 hover:bg-paper-elevated"
+                            onClick={() => patchMessageStatus(m.id, "new")}
+                          >
+                            {t.admin.markNew}
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          disabled={pending}
+                          className="text-sm border border-red-300 text-red-800 px-2 py-1 hover:bg-red-50"
+                          onClick={() => removeMessage(m.id)}
+                        >
+                          {t.admin.delete}
+                        </button>
+                      </div>
+                    </div>
+                    <p className="text-sm whitespace-pre-wrap text-ink/90 border-l-2 border-rule pl-3">
+                      {m.body}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          {/* B) Comments */}
+          <section>
+            <div className="flex items-end gap-4 mb-3">
+              <h2 className="font-serif text-xl font-bold">
+                {t.admin.commentsMod}
+              </h2>
+              <div className="h-px flex-1 bg-rule mb-2" />
+            </div>
+            {modComments.length === 0 ? (
+              <p className="text-sm text-muted">{t.admin.noComments}</p>
+            ) : (
+              <ul className="divide-y divide-neutral-200 border border-rule">
+                {modComments.map((c) => (
+                  <li key={c.id} className="p-3 sm:p-4 space-y-2">
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <div>
+                        <div className="font-semibold">{c.author}</div>
+                        <div className="text-xs text-neutral-500 mt-0.5">
+                          {c.articleTitle
+                            ? c.articleTitle
+                            : `Article ${c.articleId}`}{" "}
+                          · {new Date(c.createdAt).toLocaleString("fr-FR")}
+                          {c.hidden ? (
+                            <>
+                              {" · "}
+                              <span className="text-fernent-red font-semibold">
+                                {t.admin.hiddenBadge}
+                              </span>
+                            </>
+                          ) : null}
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          disabled={pending}
+                          className="text-sm border border-rule-strong px-2 py-1 hover:bg-paper-elevated"
+                          onClick={() =>
+                            patchCommentHidden(c.id, !c.hidden)
+                          }
+                        >
+                          {c.hidden ? t.admin.unhide : t.admin.hide}
+                        </button>
+                        <button
+                          type="button"
+                          disabled={pending}
+                          className="text-sm border border-red-300 text-red-800 px-2 py-1 hover:bg-red-50"
+                          onClick={() => removeModComment(c.id)}
+                        >
+                          {t.admin.delete}
+                        </button>
+                      </div>
+                    </div>
+                    <p className="text-sm whitespace-pre-wrap text-ink/90 border-l-2 border-rule pl-3">
+                      {c.body}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          {/* C) Banned keywords */}
+          <section>
+            <div className="flex items-end gap-4 mb-3">
+              <h2 className="font-serif text-xl font-bold">
+                {t.admin.bannedKeywords}
+              </h2>
+              <div className="h-px flex-1 bg-rule mb-2" />
+            </div>
+            <form onSubmit={addKeyword} className="flex flex-wrap gap-2 mb-4">
+              <input
+                value={keywordInput}
+                onChange={(e) => setKeywordInput(e.target.value)}
+                placeholder={t.admin.keywordPlaceholder}
+                className="flex-1 min-w-[12rem] border border-rule-strong px-3 py-2 text-sm"
+              />
+              <button
+                type="submit"
+                disabled={pending || !keywordInput.trim()}
+                className="bg-fernent-red px-4 py-2 text-sm font-semibold text-white hover:bg-fernent-red-deep disabled:opacity-60"
+              >
+                {t.admin.addKeyword}
+              </button>
+            </form>
+            {bannedKeywords.length === 0 ? (
+              <p className="text-sm text-muted">{t.admin.noKeywords}</p>
+            ) : (
+              <ul className="flex flex-wrap gap-2">
+                {bannedKeywords.map((k) => (
+                  <li
+                    key={k.id}
+                    className="inline-flex items-center gap-2 border border-rule bg-paper-elevated px-3 py-1.5 text-sm"
+                  >
+                    <span className="font-medium">{k.word}</span>
+                    <button
+                      type="button"
+                      disabled={pending}
+                      className="text-xs text-red-800 hover:underline"
+                      onClick={() => removeKeyword(k.id)}
+                      aria-label={t.admin.delete}
+                    >
+                      ×
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          {error && <p className="text-sm text-red-700">{error}</p>}
+        </div>
       )}
     </div>
   );

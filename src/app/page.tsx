@@ -1,5 +1,6 @@
 import { ArticleCard } from "@/components/ArticleCard";
 import { NewsletterForm } from "@/components/NewsletterForm";
+import { ContactForm } from "@/components/ContactForm";
 import { HomeCopy } from "@/components/HomeCopy";
 import { BreakingNewsTicker } from "@/components/BreakingNewsTicker";
 import { getFeaturedArticles, getRecentArticles } from "@/lib/articles";
@@ -83,6 +84,8 @@ export default async function HomePage() {
             </div>
 
             <NewsletterForm />
+
+            <ContactForm compact />
 
             <div className="border border-rule bg-paper-elevated p-5">
               <p className="kicker mb-1">Fil</p>

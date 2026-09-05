@@ -53,6 +53,26 @@ export type Comment = {
   author: string;
   body: string;
   createdAt: string;
+  /** Soft-hidden by moderation; excluded from public lists by default. */
+  hidden?: boolean;
+};
+
+export type ContactMessageStatus = "new" | "read" | "archived";
+
+export type ContactMessage = {
+  id: string;
+  name: string;
+  email: string;
+  subject?: string;
+  body: string;
+  createdAt: string;
+  status: ContactMessageStatus;
+};
+
+export type BannedKeyword = {
+  id: string;
+  word: string;
+  createdAt: string;
 };
 
 export const RUBRICS: { slug: Rubric; href: string }[] = [

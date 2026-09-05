@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { Comment } from "@/lib/types";
 import { addComment, getComments } from "@/lib/comments";
+import { containsBannedKeyword } from "@/lib/moderation";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -18,6 +19,12 @@ export async function POST(request: Request) {
     typeof body?.body === "string" ? body.body.trim().slice(0, 2000) : "";
   if (!articleId || !author || !text) {
     return NextResponse.json({ error: "invalid" }, { status: 400 });
+  }
+  if (await containsBannedKeyword(author, text)) {
+    return NextResponse.json(
+      { error: "banned", message: "Contenu non autorisé." },
+      { status: 400 },
+    );
   }
   const comment: Comment = {
     id: `c_${Date.now().toString(36)}`,

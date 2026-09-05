@@ -44,7 +44,8 @@ CREATE TABLE IF NOT EXISTS comments (
   article_id TEXT NOT NULL,
   author TEXT NOT NULL,
   body TEXT NOT NULL,
-  created_at TEXT NOT NULL
+  created_at TEXT NOT NULL,
+  hidden INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS newsletter (
@@ -78,17 +79,40 @@ CREATE TABLE IF NOT EXISTS videos (
   placeholder INTEGER NOT NULL DEFAULT 1
 );
 
+CREATE TABLE IF NOT EXISTS contact_messages (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  email TEXT NOT NULL,
+  subject TEXT,
+  body TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'new'
+);
+
+CREATE TABLE IF NOT EXISTS banned_keywords (
+  id TEXT PRIMARY KEY,
+  word TEXT NOT NULL UNIQUE,
+  created_at TEXT NOT NULL
+);
+
 CREATE INDEX IF NOT EXISTS idx_comments_article_id ON comments(article_id);
 CREATE INDEX IF NOT EXISTS idx_articles_rubric ON articles(rubric);
 CREATE INDEX IF NOT EXISTS idx_articles_published_at ON articles(published_at);
 CREATE INDEX IF NOT EXISTS idx_issues_year_month ON issues(year, month);
 CREATE INDEX IF NOT EXISTS idx_videos_published_at ON videos(published_at);
+CREATE INDEX IF NOT EXISTS idx_contact_messages_created_at ON contact_messages(created_at);
+CREATE INDEX IF NOT EXISTS idx_banned_keywords_word ON banned_keywords(word);
 `;
 
 async function migrateColumns(db: Client): Promise<void> {
   // Existing DBs created before cover_image / issues need soft migrations.
   try {
     await db.execute("ALTER TABLE articles ADD COLUMN cover_image TEXT");
+  } catch {
+    /* column may already exist */
+  }
+  try {
+    await db.execute("ALTER TABLE comments ADD COLUMN hidden INTEGER NOT NULL DEFAULT 0");
   } catch {
     /* column may already exist */
   }
@@ -254,6 +278,67 @@ export async function ensureSeeded(): Promise<void> {
               hasMedia ? 0 : v.placeholder !== false ? 1 : 0,
             ],
           });
+        }
+      }
+
+      const contactCount = await db.execute(
+        "SELECT COUNT(*) AS n FROM contact_messages",
+      );
+      if (Number(contactCount.rows[0]?.n ?? 0) === 0) {
+        try {
+          const { default: messages } = await import(
+            "../../content/contact-messages.json"
+          );
+          for (const m of messages as Array<{
+            id: string;
+            name: string;
+            email: string;
+            subject?: string;
+            body: string;
+            createdAt: string;
+            status?: string;
+          }>) {
+            await db.execute({
+              sql: `INSERT OR IGNORE INTO contact_messages
+                (id, name, email, subject, body, created_at, status)
+                VALUES (?, ?, ?, ?, ?, ?, ?)`,
+              args: [
+                m.id,
+                m.name,
+                m.email,
+                m.subject ?? null,
+                m.body,
+                m.createdAt,
+                m.status ?? "new",
+              ],
+            });
+          }
+        } catch {
+          /* empty seed file is fine */
+        }
+      }
+
+      const keywordCount = await db.execute(
+        "SELECT COUNT(*) AS n FROM banned_keywords",
+      );
+      if (Number(keywordCount.rows[0]?.n ?? 0) === 0) {
+        try {
+          const { default: keywords } = await import(
+            "../../content/banned-keywords.json"
+          );
+          for (const k of keywords as Array<{
+            id: string;
+            word: string;
+            createdAt: string;
+          }>) {
+            await db.execute({
+              sql: `INSERT OR IGNORE INTO banned_keywords (id, word, created_at)
+                VALUES (?, ?, ?)`,
+              args: [k.id, k.word, k.createdAt],
+            });
+          }
+        } catch {
+          /* empty seed file is fine */
         }
       }
     })().catch((err) => {
