@@ -1,0 +1,51 @@
+export type Rubric =
+  | "senegal"
+  | "afrique"
+  | "international"
+  | "economie"
+  | "social"
+  | "notre-journal";
+
+export type Article = {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string;
+  body: string;
+  rubric: Rubric;
+  author: string;
+  publishedAt: string;
+  featured: boolean;
+  commentsEnabled: boolean;
+};
+
+export type Video = {
+  id: string;
+  title: string;
+  description: string;
+  publishedAt: string;
+  duration: string;
+  placeholder: boolean;
+};
+
+export type Comment = {
+  id: string;
+  articleId: string;
+  author: string;
+  body: string;
+  createdAt: string;
+};
+
+export const RUBRICS: { slug: Rubric; href: string }[] = [
+  { slug: "senegal", href: "/rubrique/senegal" },
+  { slug: "afrique", href: "/rubrique/afrique" },
+  { slug: "international", href: "/rubrique/international" },
+  { slug: "economie", href: "/rubrique/economie" },
+  { slug: "social", href: "/rubrique/social" },
+  { slug: "notre-journal", href: "/rubrique/notre-journal" },
+];
+
+export const MOTTO =
+  "Union libre des peuples libres d'Afrique. Solidarité internationaliste des travailleurs";
+
+export const CONTACT_EMAIL = "fernentbirane@gmail.com";

@@ -1,0 +1,26 @@
+[
+  {
+    "id": "v1",
+    "title": "Dette et souveraineté : entretien",
+    "description": "Discussion autour de l'audit citoyen de la dette et des alternatives à l'austérité.",
+    "publishedAt": "2025-08-30",
+    "duration": "18:42",
+    "placeholder": true
+  },
+  {
+    "id": "v2",
+    "title": "Marchés de Dakar : paroles de commerçantes",
+    "description": "Reportage sonore et vidéo depuis Tilène et Sandaga sur la vie chère.",
+    "publishedAt": "2025-08-18",
+    "duration": "12:05",
+    "placeholder": true
+  },
+  {
+    "id": "v3",
+    "title": "Syndicats : assembler les luttes",
+    "description": "Table ronde avec des militants du public et du privé.",
+    "publishedAt": "2025-07-22",
+    "duration": "24:10",
+    "placeholder": true
+  }
+]
