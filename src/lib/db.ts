@@ -289,6 +289,20 @@ export async function ensureSeeded(): Promise<void> {
         }
       }
 
+      // One-time: drop retired "Notre journal" article from public catalog.
+      try {
+        await db.execute({
+          sql: "DELETE FROM articles WHERE id = ? OR slug = ?",
+          args: ["a9", "ce-que-veut-dire-fernent"],
+        });
+        await db.execute({
+          sql: "DELETE FROM comments WHERE article_id = ?",
+          args: ["a9"],
+        });
+      } catch {
+        /* non-fatal */
+      }
+
       // Backfill video rubrics from seed when column is empty (existing DBs).
       try {
         const { default: videoSeed } = await import("../../content/videos.json");

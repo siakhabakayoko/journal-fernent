@@ -36,6 +36,7 @@ export function Header() {
     { href: "/breves", label: t.nav.breves },
     { href: "/mensuel", label: t.nav.mensuel },
     { href: "/capsules", label: t.nav.capsules },
+    { href: "/#qui-sommes-nous", label: t.nav.quiSommesNous },
   ];
 
   const secondary = [{ href: "/contact", label: t.nav.contact }];

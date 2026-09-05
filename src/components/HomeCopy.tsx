@@ -1,8 +1,9 @@
 "use client";
 
 import { useLanguage } from "@/lib/i18n/LanguageProvider";
+import type { Dictionary } from "@/lib/i18n/dictionaries";
 
-type Section = "aLaUne" | "recent" | "ourGoal" | "ourGoalText";
+type Section = keyof Dictionary["home"];
 
 export function HomeCopy({
   section,

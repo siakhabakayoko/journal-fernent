@@ -11,9 +11,9 @@ export const metadata: Metadata = {
 
 export default async function BrevesPage() {
   const articles = await getArticles();
-  const sorted = [...articles].sort((a, b) =>
-    b.publishedAt.localeCompare(a.publishedAt),
-  );
+  const sorted = [...articles]
+    .filter((a) => a.rubric !== "notre-journal")
+    .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
 
   return (
     <div className="mx-auto max-w-6xl px-3 sm:px-4 py-8 sm:py-10">

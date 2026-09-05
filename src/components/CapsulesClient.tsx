@@ -4,17 +4,15 @@ import { useCallback, useMemo } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ContentTabs } from "@/components/ContentTabs";
 import { useLanguage } from "@/lib/i18n/LanguageProvider";
-import { isRubric, PUBLIC_RUBRICS, type Video } from "@/lib/types";
+import { isPublicRubric, PUBLIC_RUBRICS, type Video } from "@/lib/types";
 
-const ALL = "tout";
-
-function VideoCard({ v }: { v: Video }) {
+export function VideoCard({ v }: { v: Video }) {
   const isYoutube = Boolean(v.youtubeId);
   const isFile = Boolean(v.videoUrl) && !isYoutube;
   const isPlaceholder = !isYoutube && !isFile;
 
   return (
-    <li className="border border-rule bg-paper-elevated overflow-hidden card-lift group">
+    <li className="border border-rule bg-paper-elevated overflow-hidden card-lift group list-none">
       <div className="aspect-video bg-ink/90 relative overflow-hidden">
         {isYoutube && v.youtubeId ? (
           <iframe
@@ -70,32 +68,30 @@ export function CapsulesClient({ videos }: { videos: Video[] }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const paramR = searchParams.get("r");
-  const current = paramR && isRubric(paramR) ? paramR : ALL;
+  const current = paramR && isPublicRubric(paramR) ? paramR : null;
 
   const tabs = useMemo(
-    () => [
-      { id: ALL, label: t.tabs.all },
-      ...PUBLIC_RUBRICS.map((slug) => ({
+    () =>
+      PUBLIC_RUBRICS.map((slug) => ({
         id: slug,
         label: t.nav[slug],
       })),
-    ],
     [t],
   );
 
   const onChange = useCallback(
     (id: string) => {
       const params = new URLSearchParams(searchParams.toString());
-      if (id === ALL) params.delete("r");
+      if (current === id) params.delete("r");
       else params.set("r", id);
       const q = params.toString();
       router.replace(q ? `${pathname}?${q}` : pathname, { scroll: false });
     },
-    [pathname, router, searchParams],
+    [current, pathname, router, searchParams],
   );
 
   const filtered = useMemo(() => {
-    if (current === ALL) return videos;
+    if (!current) return videos;
     return videos.filter((v) => v.rubric === current);
   }, [videos, current]);
 

@@ -77,15 +77,17 @@ export type BannedKeyword = {
   createdAt: string;
 };
 
-/** Public rubrics shown as content tabs (Brèves / Capsules). */
+/** Public rubrics shown as content tabs (Brèves / Capsules) and footer links. */
 export const PUBLIC_RUBRICS: Rubric[] = [
   "senegal",
   "afrique",
   "international",
   "economie",
   "social",
-  "notre-journal",
 ];
+
+/** All rubrics including legacy/admin-only `notre-journal`. */
+export const ALL_RUBRICS: Rubric[] = [...PUBLIC_RUBRICS, "notre-journal"];
 
 export const RUBRICS: { slug: Rubric; href: string }[] = PUBLIC_RUBRICS.map(
   (slug) => ({ slug, href: `/breves?r=${slug}` }),
@@ -97,5 +99,9 @@ export const MOTTO =
 export const CONTACT_EMAIL = "fernentbirane@gmail.com";
 
 export function isRubric(value: string): value is Rubric {
+  return (ALL_RUBRICS as string[]).includes(value);
+}
+
+export function isPublicRubric(value: string): value is Rubric {
   return (PUBLIC_RUBRICS as string[]).includes(value);
 }

@@ -20,6 +20,7 @@ export const dictionaries = {
       contact: "Contact",
       admin: "Admin",
       home: "Accueil",
+      quiSommesNous: "Qui sommes-nous",
     },
     home: {
       aLaUne: "À la une",
@@ -34,6 +35,18 @@ export const dictionaries = {
       newsletterPlaceholder: "Votre e-mail",
       newsletterSubmit: "S'inscrire",
       by: "Par",
+      breves: "Brèves",
+      capsules: "Capsules",
+      mensuel: "Mensuel",
+      seeAllArticles: "Voir tous les articles",
+      seeAllCapsules: "Voir toutes les capsules vidéo",
+      seeAllIssues: "Voir tous les numéros mensuels",
+      about: "Qui sommes-nous",
+      notreJournal: "Notre journal",
+      notreJournalTitle: "Ce que veut dire Ferñent",
+      notreHistoire: "Notre histoire",
+      notreHistoirePlaceholder:
+        "Bientôt — contenus et photos à venir.",
     },
     article: {
       comments: "Commentaires",
@@ -194,6 +207,7 @@ export const dictionaries = {
       contact: "Jokkalante",
       admin: "Admin",
       home: "Accueil",
+      quiSommesNous: "Kan ñu?",
     },
     home: {
       aLaUne: "Ci kaw",
@@ -207,6 +221,18 @@ export const dictionaries = {
       newsletterPlaceholder: "Sa e-mail",
       newsletterSubmit: "Bindu",
       by: "Ci",
+      breves: "Breef",
+      capsules: "Kapsul",
+      mensuel: "Weer",
+      seeAllArticles: "Xool jukki yépp",
+      seeAllCapsules: "Xool kapsul widewo yépp",
+      seeAllIssues: "Xool numéro weer yépp",
+      about: "Kan ñu?",
+      notreJournal: "Sunu journal",
+      notreJournalTitle: "Lan la Ferñent tekki",
+      notreHistoire: "Sunu jaar-jaar",
+      notreHistoirePlaceholder:
+        "Dina ñëw — mbind ak nataal.",
     },
     article: {
       comments: "Kàddu yi",
