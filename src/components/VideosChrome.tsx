@@ -5,11 +5,13 @@ import { useLanguage } from "@/lib/i18n/LanguageProvider";
 export function VideosChrome() {
   const { t } = useLanguage();
   return (
-    <header>
-      <h1 className="font-serif text-3xl sm:text-4xl font-bold border-b-4 border-fernent-red pb-3 inline-block">
+    <header className="pb-2">
+      <p className="kicker mb-2">Médias</p>
+      <h1 className="font-serif text-3xl sm:text-4xl font-bold tracking-tight">
         {t.videos.title}
       </h1>
-      <p className="mt-3 text-neutral-700 max-w-2xl">{t.videos.intro}</p>
+      <div className="mt-3 h-[3px] w-16 bg-fernent-red" aria-hidden />
+      <p className="mt-4 text-muted max-w-2xl leading-relaxed">{t.videos.intro}</p>
     </header>
   );
 }

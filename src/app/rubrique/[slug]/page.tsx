@@ -36,14 +36,16 @@ export default async function RubricPage({ params }: Props) {
   const articles = await getArticlesByRubric(slug as Rubric);
 
   return (
-    <div className="mx-auto max-w-6xl px-3 sm:px-4 py-8">
+    <div className="mx-auto max-w-6xl px-3 sm:px-4 py-8 sm:py-10">
       <RubricTitle slug={slug as Rubric} />
-      <div className="mt-6 grid gap-4 sm:grid-cols-2">
+      <div className="mt-8 grid gap-4 sm:grid-cols-2">
         {articles.map((article) => (
           <ArticleCard key={article.id} article={article} />
         ))}
         {articles.length === 0 && (
-          <p className="text-neutral-600 col-span-full">Aucun article dans cette rubrique.</p>
+          <p className="text-muted col-span-full">
+            Aucun article dans cette rubrique.
+          </p>
         )}
       </div>
     </div>

@@ -13,25 +13,39 @@ export function ArticleChrome({ article }: { article: Article }) {
   }).format(new Date(article.publishedAt));
 
   return (
-    <header>
-      <div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-wider text-fernent-red">
-        <Link href={`/rubrique/${article.rubric}`} className="hover:underline">
+    <header className="border-b border-rule pb-6">
+      <div className="flex flex-wrap items-center gap-2 text-xs">
+        <Link
+          href={`/rubrique/${article.rubric}`}
+          className="kicker hover:underline"
+        >
           {t.nav[article.rubric]}
         </Link>
-        <span className="text-neutral-400">·</span>
-        <time dateTime={article.publishedAt} className="text-neutral-500 normal-case tracking-normal font-normal">
+        <span className="text-rule-strong">·</span>
+        <time
+          dateTime={article.publishedAt}
+          className="text-muted font-normal"
+        >
           {date}
         </time>
       </div>
-      <h1 className="mt-3 font-serif text-3xl sm:text-4xl font-bold leading-tight text-black">
+      <h1 className="mt-4 font-serif text-3xl sm:text-[2.75rem] font-bold leading-[1.15] tracking-tight text-ink">
         {article.title}
       </h1>
-      <p className="mt-4 text-lg text-neutral-700 leading-relaxed border-l-4 border-fernent-red pl-3">
+      <p className="mt-5 text-lg sm:text-xl text-muted leading-relaxed border-l-[3px] border-fernent-red pl-4">
         {article.excerpt}
       </p>
-      <p className="mt-3 text-sm text-neutral-500">
-        {t.home.by} {article.author}
-      </p>
+      <div className="mt-5 flex flex-wrap items-center justify-between gap-3 text-sm">
+        <p className="text-ink font-medium">
+          <span className="text-muted font-normal">{t.home.by} </span>
+          {article.author}
+        </p>
+        <div className="flex items-center gap-3 text-xs text-muted uppercase tracking-wider">
+          <span>Ferñent</span>
+          <span className="text-rule-strong">·</span>
+          <span>Lecture</span>
+        </div>
+      </div>
     </header>
   );
 }

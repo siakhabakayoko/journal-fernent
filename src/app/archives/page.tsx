@@ -14,15 +14,24 @@ export default async function ArchivesPage() {
   );
 
   return (
-    <div className="mx-auto max-w-3xl px-3 sm:px-4 py-8">
+    <div className="mx-auto max-w-3xl px-3 sm:px-4 py-8 sm:py-10">
       <ArchivesChrome />
-      <ol className="mt-8 divide-y divide-neutral-200 border border-neutral-200 bg-white">
+      <ol className="mt-8 divide-y divide-rule border border-rule bg-paper-elevated">
         {articles.map((a) => (
-          <li key={a.id} className="px-4 py-3 flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-4">
-            <time dateTime={a.publishedAt} className="text-xs text-neutral-500 shrink-0 w-28">
+          <li
+            key={a.id}
+            className="px-4 sm:px-5 py-3.5 flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-5 hover:bg-fernent-red/[0.03] transition-colors"
+          >
+            <time
+              dateTime={a.publishedAt}
+              className="text-[0.7rem] uppercase tracking-wider text-muted shrink-0 w-28"
+            >
               {a.publishedAt}
             </time>
-            <Link href={`/article/${a.slug}`} className="font-serif font-semibold hover:text-fernent-red">
+            <Link
+              href={`/article/${a.slug}`}
+              className="font-serif font-bold text-ink hover:text-fernent-red transition-colors"
+            >
               {a.title}
             </Link>
           </li>

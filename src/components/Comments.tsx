@@ -27,9 +27,9 @@ export function Comments({
 
   if (!enabled) {
     return (
-      <section className="mt-10 border-t border-neutral-200 pt-6">
+      <section className="mt-12 border-t border-rule pt-8">
         <h2 className="font-serif text-xl font-bold">{t.article.comments}</h2>
-        <p className="mt-2 text-sm text-neutral-600">{t.article.commentsOff}</p>
+        <p className="mt-2 text-sm text-muted">{t.article.commentsOff}</p>
       </section>
     );
   }
@@ -54,23 +54,26 @@ export function Comments({
   }
 
   return (
-    <section className="mt-10 border-t border-neutral-200 pt-6">
+    <section className="mt-12 border-t border-rule pt-8">
+      <p className="kicker mb-1">Débat</p>
       <h2 className="font-serif text-xl font-bold">{t.article.comments}</h2>
-      <ul className="mt-4 space-y-3">
+      <ul className="mt-5 space-y-3">
         {comments.length === 0 && (
-          <li className="text-sm text-neutral-500">{t.article.noComments}</li>
+          <li className="text-sm text-muted">{t.article.noComments}</li>
         )}
         {comments.map((c) => (
-          <li key={c.id} className="border border-neutral-200 bg-neutral-50 p-3">
-            <div className="text-xs font-semibold text-fernent-red">{c.author}</div>
-            <p className="mt-1 text-sm text-neutral-800 whitespace-pre-wrap">{c.body}</p>
+          <li key={c.id} className="border border-rule bg-paper-elevated p-4">
+            <div className="kicker !text-[0.65rem]">{c.author}</div>
+            <p className="mt-1.5 text-sm text-ink whitespace-pre-wrap leading-relaxed">
+              {c.body}
+            </p>
           </li>
         ))}
       </ul>
-      <form onSubmit={onSubmit} className="mt-6 space-y-3">
-        <h3 className="text-sm font-semibold uppercase tracking-wide">{t.article.leaveComment}</h3>
+      <form onSubmit={onSubmit} className="mt-8 space-y-3 border border-rule bg-paper-elevated p-5">
+        <h3 className="kicker">{t.article.leaveComment}</h3>
         <div>
-          <label className="block text-xs text-neutral-600 mb-1" htmlFor="c-name">
+          <label className="block text-xs text-muted mb-1" htmlFor="c-name">
             {t.article.name}
           </label>
           <input
@@ -78,11 +81,11 @@ export function Comments({
             required
             value={author}
             onChange={(e) => setAuthor(e.target.value)}
-            className="w-full border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-fernent-red"
+            className="w-full border border-rule-strong bg-paper px-3 py-2 text-sm outline-none focus:border-fernent-red transition-colors"
           />
         </div>
         <div>
-          <label className="block text-xs text-neutral-600 mb-1" htmlFor="c-body">
+          <label className="block text-xs text-muted mb-1" htmlFor="c-body">
             {t.article.message}
           </label>
           <textarea
@@ -91,13 +94,13 @@ export function Comments({
             rows={3}
             value={body}
             onChange={(e) => setBody(e.target.value)}
-            className="w-full border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-fernent-red"
+            className="w-full border border-rule-strong bg-paper px-3 py-2 text-sm outline-none focus:border-fernent-red transition-colors"
           />
         </div>
         <button
           type="submit"
           disabled={pending}
-          className="bg-fernent-red px-4 py-2 text-sm font-semibold text-white hover:bg-red-800 disabled:opacity-60"
+          className="bg-fernent-red px-4 py-2.5 text-sm font-bold uppercase tracking-wider text-white hover:bg-fernent-red-deep disabled:opacity-60 transition-colors"
         >
           {t.article.publish}
         </button>

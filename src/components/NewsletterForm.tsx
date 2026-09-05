@@ -33,11 +33,14 @@ export function NewsletterForm() {
   }
 
   return (
-    <section className="border-2 border-fernent-red bg-fernent-red/5 p-5 sm:p-6">
-      <h2 className="font-serif text-xl sm:text-2xl font-bold text-black">
+    <section className="border border-fernent-red bg-gradient-to-br from-fernent-red/[0.07] to-paper-elevated p-5 sm:p-6">
+      <p className="kicker mb-1">Newsletter</p>
+      <h2 className="font-serif text-xl sm:text-2xl font-bold text-ink">
         {t.home.newsletterTitle}
       </h2>
-      <p className="mt-1 text-sm text-neutral-700">{t.home.newsletterText}</p>
+      <p className="mt-1.5 text-sm text-muted leading-relaxed">
+        {t.home.newsletterText}
+      </p>
       <form onSubmit={onSubmit} className="mt-4 flex flex-col sm:flex-row gap-2">
         <label className="sr-only" htmlFor="newsletter-email">
           {t.home.newsletterPlaceholder}
@@ -49,12 +52,12 @@ export function NewsletterForm() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder={t.home.newsletterPlaceholder}
-          className="flex-1 border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-fernent-red"
+          className="flex-1 border border-rule-strong bg-paper-elevated px-3 py-2.5 text-sm outline-none focus:border-fernent-red transition-colors"
         />
         <button
           type="submit"
           disabled={pending}
-          className="bg-fernent-red px-4 py-2 text-sm font-semibold text-white hover:bg-red-800 disabled:opacity-60"
+          className="bg-fernent-red px-4 py-2.5 text-sm font-bold uppercase tracking-wider text-white hover:bg-fernent-red-deep active:scale-[0.98] disabled:opacity-60 transition-all"
         >
           {t.home.newsletterSubmit}
         </button>
@@ -65,12 +68,12 @@ export function NewsletterForm() {
         </p>
       )}
       {status === "invalid" && (
-        <p className="mt-2 text-sm text-red-800" role="alert">
+        <p className="mt-2 text-sm text-fernent-red" role="alert">
           {t.newsletter.invalid}
         </p>
       )}
       {status === "err" && (
-        <p className="mt-2 text-sm text-red-800" role="alert">
+        <p className="mt-2 text-sm text-fernent-red" role="alert">
           {t.newsletter.error}
         </p>
       )}

@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function ContactPage() {
   return (
-    <div className="mx-auto max-w-3xl px-3 sm:px-4 py-8">
+    <div className="mx-auto max-w-3xl px-3 sm:px-4 py-8 sm:py-10">
       <ContactChrome email={CONTACT_EMAIL} />
     </div>
   );

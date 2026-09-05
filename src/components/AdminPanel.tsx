@@ -148,10 +148,10 @@ export function AdminPanel({
   if (!authed) {
     return (
       <div className="max-w-md">
-        <h1 className="font-serif text-3xl font-bold border-b-4 border-fernent-red pb-3 inline-block">
+        <h1 className="font-serif text-3xl font-bold tracking-tight text-ink">
           {t.admin.title}
         </h1>
-        <p className="mt-3 text-sm text-neutral-600">{t.admin.demoNote}</p>
+        <p className="mt-3 text-sm text-muted">{t.admin.demoNote}</p>
         <form onSubmit={login} className="mt-6 space-y-3">
           <label className="block text-sm font-semibold" htmlFor="admin-pass">
             {t.admin.password}
@@ -161,7 +161,7 @@ export function AdminPanel({
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-fernent-red"
+            className="w-full border border-rule-strong bg-paper-elevated px-3 py-2 text-sm outline-none focus:border-fernent-red transition-colors"
             required
           />
           {error && (
@@ -172,7 +172,7 @@ export function AdminPanel({
           <button
             type="submit"
             disabled={pending}
-            className="bg-fernent-red px-4 py-2 text-sm font-semibold text-white hover:bg-red-800 disabled:opacity-60"
+            className="bg-fernent-red px-4 py-2.5 text-sm font-bold uppercase tracking-wider text-white hover:bg-fernent-red-deep disabled:opacity-60 transition-colors"
           >
             {t.admin.login}
           </button>
@@ -184,22 +184,22 @@ export function AdminPanel({
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="font-serif text-3xl font-bold border-b-4 border-fernent-red pb-3 inline-block">
+        <h1 className="font-serif text-3xl font-bold tracking-tight text-ink">
           {t.admin.title}
         </h1>
         <button
           type="button"
           onClick={logout}
-          className="text-sm font-semibold border border-neutral-300 px-3 py-1.5 hover:bg-neutral-50"
+          className="text-sm font-semibold border border-rule-strong px-3 py-1.5 hover:bg-rule transition-colors"
         >
           {t.admin.logout}
         </button>
       </div>
-      <p className="mt-3 text-sm text-neutral-600">{t.admin.demoNote}</p>
+      <p className="mt-3 text-sm text-muted">{t.admin.demoNote}</p>
       {modeNote && <p className="mt-2 text-sm text-fernent-red">{modeNote}</p>}
 
       {draft ? (
-        <form onSubmit={saveDraft} className="mt-6 space-y-3 border border-neutral-200 p-4 bg-neutral-50">
+        <form onSubmit={saveDraft} className="mt-6 space-y-3 border border-rule p-4 bg-paper-elevated">
           <h2 className="font-serif text-xl font-bold">
             {draft.id ? t.admin.edit : t.admin.newArticle}
           </h2>
@@ -216,7 +216,7 @@ export function AdminPanel({
               <input
                 value={draft[key]}
                 onChange={(e) => setDraft({ ...draft, [key]: e.target.value })}
-                className="w-full border border-neutral-300 px-3 py-2 text-sm"
+                className="w-full border border-rule-strong px-3 py-2 text-sm"
                 required={key === "title"}
               />
             </div>
@@ -228,7 +228,7 @@ export function AdminPanel({
               onChange={(e) =>
                 setDraft({ ...draft, rubric: e.target.value as Rubric })
               }
-              className="w-full border border-neutral-300 px-3 py-2 text-sm"
+              className="w-full border border-rule-strong px-3 py-2 text-sm"
             >
               {RUBRIC_OPTIONS.map((r) => (
                 <option key={r} value={r}>
@@ -243,7 +243,7 @@ export function AdminPanel({
               rows={2}
               value={draft.excerpt}
               onChange={(e) => setDraft({ ...draft, excerpt: e.target.value })}
-              className="w-full border border-neutral-300 px-3 py-2 text-sm"
+              className="w-full border border-rule-strong px-3 py-2 text-sm"
               required
             />
           </div>
@@ -253,7 +253,7 @@ export function AdminPanel({
               rows={10}
               value={draft.body}
               onChange={(e) => setDraft({ ...draft, body: e.target.value })}
-              className="w-full border border-neutral-300 px-3 py-2 text-sm font-mono"
+              className="w-full border border-rule-strong px-3 py-2 text-sm font-mono"
               required
             />
           </div>
@@ -282,14 +282,14 @@ export function AdminPanel({
             <button
               type="submit"
               disabled={pending}
-              className="bg-fernent-red px-4 py-2 text-sm font-semibold text-white hover:bg-red-800 disabled:opacity-60"
+              className="bg-fernent-red px-4 py-2.5 text-sm font-bold uppercase tracking-wider text-white hover:bg-fernent-red-deep disabled:opacity-60 transition-colors"
             >
               {t.admin.save}
             </button>
             <button
               type="button"
               onClick={() => setDraft(null)}
-              className="border border-neutral-300 px-4 py-2 text-sm font-semibold"
+              className="border border-rule-strong px-4 py-2 text-sm font-semibold"
             >
               {t.admin.cancel}
             </button>
@@ -300,12 +300,12 @@ export function AdminPanel({
           <button
             type="button"
             onClick={() => setDraft(emptyDraft())}
-            className="bg-fernent-red px-4 py-2 text-sm font-semibold text-white hover:bg-red-800"
+            className="bg-fernent-red px-4 py-2 text-sm font-semibold text-white hover:bg-fernent-red-deep"
           >
             {t.admin.newArticle}
           </button>
           <h2 className="mt-6 font-serif text-xl font-bold">{t.admin.articles}</h2>
-          <ul className="mt-3 divide-y divide-neutral-200 border border-neutral-200">
+          <ul className="mt-3 divide-y divide-neutral-200 border border-rule">
             {sorted.map((a) => (
               <li key={a.id} className="p-3 flex flex-col sm:flex-row sm:items-center gap-2 sm:justify-between">
                 <div>
@@ -317,7 +317,7 @@ export function AdminPanel({
                 <div className="flex gap-2">
                   <button
                     type="button"
-                    className="text-sm border border-neutral-300 px-2 py-1 hover:bg-neutral-50"
+                    className="text-sm border border-rule-strong px-2 py-1 hover:bg-paper-elevated"
                     onClick={() =>
                       setDraft({
                         id: a.id,

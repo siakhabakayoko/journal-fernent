@@ -1,19 +1,19 @@
 import type { Metadata } from "next";
-import { Source_Sans_3, Source_Serif_4 } from "next/font/google";
+import { Playfair_Display, Source_Sans_3 } from "next/font/google";
 import "./globals.css";
 import { LanguageProvider } from "@/lib/i18n/LanguageProvider";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { MOTTO } from "@/lib/types";
 
-const sourceSans = Source_Sans_3({
-  variable: "--font-source-sans",
+const display = Playfair_Display({
+  variable: "--font-display",
   subsets: ["latin"],
   display: "swap",
 });
 
-const sourceSerif = Source_Serif_4({
-  variable: "--font-source-serif",
+const ui = Source_Sans_3({
+  variable: "--font-ui",
   subsets: ["latin"],
   display: "swap",
 });
@@ -55,8 +55,8 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="fr" className={`${sourceSans.variable} ${sourceSerif.variable} h-full`}>
-      <body className="min-h-full flex flex-col bg-white text-black font-sans antialiased">
+    <html lang="fr" className={`${display.variable} ${ui.variable} h-full`}>
+      <body className="min-h-full flex flex-col bg-paper text-ink font-sans antialiased">
         <LanguageProvider>
           <Header />
           <main className="flex-1">{children}</main>

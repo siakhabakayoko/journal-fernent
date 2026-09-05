@@ -5,12 +5,14 @@ import { useLanguage } from "@/lib/i18n/LanguageProvider";
 export function ArchivesChrome() {
   const { t } = useLanguage();
   return (
-    <header>
-      <h1 className="font-serif text-3xl sm:text-4xl font-bold border-b-4 border-fernent-red pb-3 inline-block">
+    <header className="pb-2">
+      <p className="kicker mb-2">Catalogue</p>
+      <h1 className="font-serif text-3xl sm:text-4xl font-bold tracking-tight">
         {t.archives.title}
       </h1>
-      <p className="mt-3 text-neutral-700">{t.archives.intro}</p>
-      <p className="mt-2 text-sm text-neutral-500 italic">{t.archives.placeholder}</p>
+      <div className="mt-3 h-[3px] w-16 bg-fernent-red" aria-hidden />
+      <p className="mt-4 text-muted leading-relaxed">{t.archives.intro}</p>
+      <p className="mt-2 text-sm text-muted/80 italic">{t.archives.placeholder}</p>
     </header>
   );
 }
