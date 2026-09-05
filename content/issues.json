@@ -1,13 +1,24 @@
 [
   {
-    "id": "iss_2026_09",
-    "slug": "fernent-septembre-2026",
-    "title": "Ferñent — Septembre 2026",
-    "month": 9,
+    "id": "iss_2026_05",
+    "slug": "fernent-mai-2026",
+    "title": "Ferñent — Mai 2026",
+    "month": 5,
     "year": 2026,
-    "description": "Numéro mensuel de septembre 2026. PDF à venir — uploadez-le depuis l'admin.",
-    "pdfUrl": "",
+    "description": "1er Mai 2026 — Les bases syndicales doivent reprendre leurs syndicats en main.",
+    "pdfUrl": "/archives/fernent-mai-2026.pdf",
     "coverImage": "/covers/issue-2026-09.svg",
-    "publishedAt": "2026-09-01"
+    "publishedAt": "2026-05-01"
+  },
+  {
+    "id": "iss_2026_02",
+    "slug": "fernent-fevrier-2026",
+    "title": "Ferñent — Février 2026",
+    "month": 2,
+    "year": 2026,
+    "description": "N° février 2026 — APR/BBY/FMI et baisses de prix sous Diomaye-Sonko.",
+    "pdfUrl": "/archives/fernent-fevrier-2026.pdf",
+    "coverImage": "/covers/issue-2026-09.svg",
+    "publishedAt": "2026-02-01"
   }
 ]
