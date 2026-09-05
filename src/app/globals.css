@@ -6,9 +6,9 @@
   --ink: #14110f;
   --paper: #faf8f5;
   --paper-elevated: #ffffff;
-  --fernent-red: #9f1239;
-  --fernent-red-deep: #7f0d2c;
-  --fernent-crimson: #8B0000;
+  --fernent-red: #E10600;
+  --fernent-red-deep: #C40500;
+  --fernent-crimson: #B30400;
   --rule: #e7e2da;
   --rule-strong: #cfc7bc;
   --muted: #6b6560;
@@ -36,8 +36,8 @@ body {
 }
 
 ::selection {
-  background: #fecdd3;
-  color: #7f0d2c;
+  background: #ffc9c9;
+  color: #C40500;
 }
 
 :focus-visible {
@@ -116,7 +116,7 @@ body {
 /* Editorial color blocks for featured panels */
 .editorial-panel {
   background:
-    linear-gradient(145deg, #1a1214 0%, #3d1520 42%, #9f1239 100%);
+    linear-gradient(145deg, #1a1214 0%, #3d1010 42%, #E10600 100%);
   position: relative;
   overflow: hidden;
 }
