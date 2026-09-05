@@ -107,12 +107,7 @@ export function Header() {
             className="flex flex-col items-center text-center group min-w-0"
             onClick={() => setOpen(false)}
           >
-            <div className="flex items-center gap-3">
-              <Logo className="h-9 w-9 sm:h-11 sm:w-11 shrink-0" />
-              <div className="font-serif text-3xl sm:text-5xl font-bold tracking-tight text-ink leading-none group-hover:text-fernent-red transition-colors">
-                Ferñent
-              </div>
-            </div>
+            <Logo priority className="h-10 sm:h-14 w-auto max-w-[min(92vw,32rem)]" />
             <p className="mt-2 max-w-xl text-[0.7rem] sm:text-xs text-muted italic leading-snug px-2">
               « {t.motto} »
             </p>

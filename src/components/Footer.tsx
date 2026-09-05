@@ -13,12 +13,7 @@ export function Footer() {
       <div className="mx-auto max-w-6xl px-3 sm:px-4 py-10 sm:py-12">
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
           <div className="sm:col-span-2 lg:col-span-1">
-            <div className="flex items-center gap-2.5">
-              <Logo className="h-9 w-9" />
-              <p className="font-serif text-2xl font-bold text-white leading-none">
-                Ferñent
-              </p>
-            </div>
+            <Logo onDark className="h-9 sm:h-10 w-auto max-w-[14rem]" />
             <p className="mt-4 text-sm text-white/65 leading-relaxed max-w-xs italic">
               « {t.motto} »
             </p>
