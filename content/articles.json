@@ -36,7 +36,7 @@
     "publishedAt": "2025-08-28",
     "featured": true,
     "commentsEnabled": true,
-    "coverImage": "/covers/photos/a3-femmes.jpg"
+    "coverImage": "/covers/photos/a3-femmes.png"
   },
   {
     "id": "a4",
@@ -62,7 +62,7 @@
     "publishedAt": "2025-08-20",
     "featured": false,
     "commentsEnabled": true,
-    "coverImage": "/covers/photos/a5-sahel.jpg"
+    "coverImage": "/covers/photos/a5-sahel.png"
   },
   {
     "id": "a6",
@@ -75,7 +75,7 @@
     "publishedAt": "2025-08-14",
     "featured": false,
     "commentsEnabled": true,
-    "coverImage": "/covers/photos/a6-brics.jpg"
+    "coverImage": "/covers/photos/a6-brics.png"
   },
   {
     "id": "a7",
@@ -127,6 +127,6 @@
     "publishedAt": "2025-07-15",
     "featured": false,
     "commentsEnabled": true,
-    "coverImage": "/covers/photos/a10-palestine.jpg"
+    "coverImage": "/covers/photos/a10-palestine.png"
   }
 ]
