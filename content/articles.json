@@ -10,7 +10,7 @@
     "publishedAt": "2025-09-02",
     "featured": true,
     "commentsEnabled": true,
-    "coverImage": "/covers/dette.svg"
+    "coverImage": "/covers/photos/a1-dette.jpg"
   },
   {
     "id": "a2",
@@ -23,7 +23,7 @@
     "publishedAt": "2025-09-01",
     "featured": true,
     "commentsEnabled": true,
-    "coverImage": "/covers/syndicat.svg"
+    "coverImage": "/covers/photos/a2-syndicat.jpg"
   },
   {
     "id": "a3",
@@ -36,7 +36,7 @@
     "publishedAt": "2025-08-28",
     "featured": true,
     "commentsEnabled": true,
-    "coverImage": "/covers/femmes.svg"
+    "coverImage": "/covers/photos/a3-femmes.jpg"
   },
   {
     "id": "a4",
@@ -49,7 +49,7 @@
     "publishedAt": "2025-08-25",
     "featured": false,
     "commentsEnabled": true,
-    "coverImage": "/covers/riz.svg"
+    "coverImage": "/covers/photos/a4-marche.jpg"
   },
   {
     "id": "a5",
@@ -62,7 +62,7 @@
     "publishedAt": "2025-08-20",
     "featured": false,
     "commentsEnabled": true,
-    "coverImage": "/covers/sahel.svg"
+    "coverImage": "/covers/photos/a5-sahel.jpg"
   },
   {
     "id": "a6",
@@ -74,7 +74,8 @@
     "author": "Omar Ba",
     "publishedAt": "2025-08-14",
     "featured": false,
-    "commentsEnabled": true
+    "commentsEnabled": true,
+    "coverImage": "/covers/photos/a6-brics.jpg"
   },
   {
     "id": "a7",
@@ -86,7 +87,8 @@
     "author": "Awa Cissé",
     "publishedAt": "2025-08-08",
     "featured": false,
-    "commentsEnabled": false
+    "commentsEnabled": false,
+    "coverImage": "/covers/photos/a7-impots.jpg"
   },
   {
     "id": "a8",
@@ -98,7 +100,8 @@
     "author": "Mamadou Fall",
     "publishedAt": "2025-08-01",
     "featured": false,
-    "commentsEnabled": true
+    "commentsEnabled": true,
+    "coverImage": "/covers/photos/a8-jeunesse.jpg"
   },
   {
     "id": "a9",
@@ -110,7 +113,8 @@
     "author": "La rédaction",
     "publishedAt": "2025-07-20",
     "featured": false,
-    "commentsEnabled": true
+    "commentsEnabled": true,
+    "coverImage": "/covers/photos/a9-journal.jpg"
   },
   {
     "id": "a10",
@@ -122,6 +126,7 @@
     "author": "Rédaction Ferñent",
     "publishedAt": "2025-07-15",
     "featured": false,
-    "commentsEnabled": true
+    "commentsEnabled": true,
+    "coverImage": "/covers/photos/a10-palestine.jpg"
   }
 ]
