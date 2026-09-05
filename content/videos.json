@@ -1,26 +1,134 @@
 [
   {
-    "id": "v1",
-    "title": "Dette et souveraineté : entretien",
-    "description": "Discussion autour de l'audit citoyen de la dette et des alternatives à l'austérité.",
-    "publishedAt": "2025-08-30",
-    "duration": "18:42",
-    "placeholder": true
+    "id": "yt_8W9PgikejGk",
+    "title": "SENEGAL : DAMA AM BOR",
+    "description": "Vidéo FRAPP TV — https://youtube.com/@frapptv9321",
+    "publishedAt": "2026-09-05",
+    "duration": "22:15",
+    "youtubeUrl": "https://www.youtube.com/watch?v=8W9PgikejGk",
+    "youtubeId": "8W9PgikejGk",
+    "thumbnailUrl": "https://i.ytimg.com/vi/8W9PgikejGk/hqdefault.jpg",
+    "placeholder": false
   },
   {
-    "id": "v2",
-    "title": "Marchés de Dakar : paroles de commerçantes",
-    "description": "Reportage sonore et vidéo depuis Tilène et Sandaga sur la vie chère.",
-    "publishedAt": "2025-08-18",
-    "duration": "12:05",
-    "placeholder": true
+    "id": "yt_4OY-NiHUxJs",
+    "title": "Les pistes de sortie de la crise de la dette au Sénégal avec Abdou Cissé",
+    "description": "Vidéo FRAPP TV — https://youtube.com/@frapptv9321",
+    "publishedAt": "2026-09-05",
+    "duration": "22:22",
+    "youtubeUrl": "https://www.youtube.com/watch?v=4OY-NiHUxJs",
+    "youtubeId": "4OY-NiHUxJs",
+    "thumbnailUrl": "https://i.ytimg.com/vi/4OY-NiHUxJs/hqdefault.jpg",
+    "placeholder": false
   },
   {
-    "id": "v3",
-    "title": "Syndicats : assembler les luttes",
-    "description": "Table ronde avec des militants du public et du privé.",
-    "publishedAt": "2025-07-22",
-    "duration": "24:10",
-    "placeholder": true
+    "id": "yt_RzxKzBtbTTA",
+    "title": "Ndongo Samba Sylla explore les pistes de sortie de la crise de la dette au Sénégal",
+    "description": "Vidéo FRAPP TV — https://youtube.com/@frapptv9321",
+    "publishedAt": "2026-09-05",
+    "duration": "26:22",
+    "youtubeUrl": "https://www.youtube.com/watch?v=RzxKzBtbTTA",
+    "youtubeId": "RzxKzBtbTTA",
+    "thumbnailUrl": "https://i.ytimg.com/vi/RzxKzBtbTTA/hqdefault.jpg",
+    "placeholder": false
+  },
+  {
+    "id": "yt_FksoLaZr9BU",
+    "title": "Audit Citoyen de la Dette avec Eric Toussaint et El Hadj Abdoulaye Seck",
+    "description": "Vidéo FRAPP TV — https://youtube.com/@frapptv9321",
+    "publishedAt": "2026-09-05",
+    "duration": "1:46:13",
+    "youtubeUrl": "https://www.youtube.com/watch?v=FksoLaZr9BU",
+    "youtubeId": "FksoLaZr9BU",
+    "thumbnailUrl": "https://i.ytimg.com/vi/FksoLaZr9BU/hqdefault.jpg",
+    "placeholder": false
+  },
+  {
+    "id": "yt_fux0ENlhGKw",
+    "title": "NON A LA DETTE ILLEGITIME ET ODIEUSE",
+    "description": "Vidéo FRAPP TV — https://youtube.com/@frapptv9321",
+    "publishedAt": "2026-09-05",
+    "duration": "2:38",
+    "youtubeUrl": "https://www.youtube.com/watch?v=fux0ENlhGKw",
+    "youtubeId": "fux0ENlhGKw",
+    "thumbnailUrl": "https://i.ytimg.com/vi/fux0ENlhGKw/hqdefault.jpg",
+    "placeholder": false
+  },
+  {
+    "id": "yt_b_J3cYnMQE8",
+    "title": "Ziguinchor : Cheikh Al Makhtoum Sy revient sur le  détournement à la mairie au micro de la Radio rfm",
+    "description": "Vidéo FRAPP TV — https://youtube.com/@frapptv9321",
+    "publishedAt": "2026-09-05",
+    "duration": "4:04",
+    "youtubeUrl": "https://www.youtube.com/watch?v=b_J3cYnMQE8",
+    "youtubeId": "b_J3cYnMQE8",
+    "thumbnailUrl": "https://i.ytimg.com/vi/b_J3cYnMQE8/hqdefault.jpg",
+    "placeholder": false
+  },
+  {
+    "id": "yt_sTFGP4uQye8",
+    "title": "Souleymane Gueye, délégué général du FRAPP :  Guy Marius dafay dokhal esprit FRAPP bir Assemblée",
+    "description": "Vidéo FRAPP TV — https://youtube.com/@frapptv9321",
+    "publishedAt": "2026-09-05",
+    "duration": "25:48",
+    "youtubeUrl": "https://www.youtube.com/watch?v=sTFGP4uQye8",
+    "youtubeId": "sTFGP4uQye8",
+    "thumbnailUrl": "https://i.ytimg.com/vi/sTFGP4uQye8/hqdefault.jpg",
+    "placeholder": false
+  },
+  {
+    "id": "yt_EpfVaEBg9hg",
+    "title": "FRAPP : Daouda Gueye, la francophonie n'est pas faite par les africains et la France n'est pays ...",
+    "description": "Vidéo FRAPP TV — https://youtube.com/@frapptv9321",
+    "publishedAt": "2026-09-05",
+    "duration": "9:01",
+    "youtubeUrl": "https://www.youtube.com/watch?v=EpfVaEBg9hg",
+    "youtubeId": "EpfVaEBg9hg",
+    "thumbnailUrl": "https://i.ytimg.com/vi/EpfVaEBg9hg/hqdefault.jpg",
+    "placeholder": false
+  },
+  {
+    "id": "yt_WrsE_UkfEQ4",
+    "title": "Afrique, Québec et nations autochtones : une lutte commune contre l’influence du colonialisme",
+    "description": "Vidéo FRAPP TV — https://youtube.com/@frapptv9321",
+    "publishedAt": "2026-09-05",
+    "duration": "23:41",
+    "youtubeUrl": "https://www.youtube.com/watch?v=WrsE_UkfEQ4",
+    "youtubeId": "WrsE_UkfEQ4",
+    "thumbnailUrl": "https://i.ytimg.com/vi/WrsE_UkfEQ4/hqdefault.jpg",
+    "placeholder": false
+  },
+  {
+    "id": "yt_2_4x1RR8fB8",
+    "title": "Aliou Gérad Koita : si un soi-disant politicien vole l’argent du peuple, on dit.... Le peuple doit .",
+    "description": "Vidéo FRAPP TV — https://youtube.com/@frapptv9321",
+    "publishedAt": "2026-09-05",
+    "duration": "9:32",
+    "youtubeUrl": "https://www.youtube.com/watch?v=2_4x1RR8fB8",
+    "youtubeId": "2_4x1RR8fB8",
+    "thumbnailUrl": "https://i.ytimg.com/vi/2_4x1RR8fB8/hqdefault.jpg",
+    "placeholder": false
+  },
+  {
+    "id": "yt_na_LeNPxSQA",
+    "title": "Ayib Daffé : le Sénégal doit arrêter toutes diplomaties avec l'Israël",
+    "description": "Vidéo FRAPP TV — https://youtube.com/@frapptv9321",
+    "publishedAt": "2026-09-05",
+    "duration": "2:42",
+    "youtubeUrl": "https://www.youtube.com/watch?v=na_LeNPxSQA",
+    "youtubeId": "na_LeNPxSQA",
+    "thumbnailUrl": "https://i.ytimg.com/vi/na_LeNPxSQA/hqdefault.jpg",
+    "placeholder": false
+  },
+  {
+    "id": "yt_6h_T8GMqO1Y",
+    "title": "Manifestation de solidarité à la Palestine : le message fort de la coalition Sénégal-Palestine",
+    "description": "Vidéo FRAPP TV — https://youtube.com/@frapptv9321",
+    "publishedAt": "2026-09-05",
+    "duration": "4:22",
+    "youtubeUrl": "https://www.youtube.com/watch?v=6h_T8GMqO1Y",
+    "youtubeId": "6h_T8GMqO1Y",
+    "thumbnailUrl": "https://i.ytimg.com/vi/6h_T8GMqO1Y/hqdefault.jpg",
+    "placeholder": false
   }
 ]
