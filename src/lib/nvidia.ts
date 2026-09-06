@@ -277,9 +277,18 @@ export function buildPollinationsImageUrl(
   const shortPrompt = prompt.trim().slice(0, 1200);
   const width = opts.width ?? FLUX_DEFAULT_SIZE;
   const height = opts.height ?? FLUX_DEFAULT_SIZE;
+  const model =
+    process.env.IMAGE_MODEL?.trim() ||
+    process.env.POLLINATIONS_MODEL?.trim() ||
+    "flux";
+  // Stronger photojournalism cue for Pollinations FLUX fallback covers.
+  const boosted =
+    /photojournal|editorial|documentary|press photo/i.test(shortPrompt)
+      ? shortPrompt
+      : `${shortPrompt} Magnum-style documentary photojournalism, photorealistic press photography, natural light, high detail, no text`;
   return (
-    `https://image.pollinations.ai/prompt/${encodeURIComponent(shortPrompt)}` +
-    `?width=${width}&height=${height}&nologo=true&model=flux`
+    `https://image.pollinations.ai/prompt/${encodeURIComponent(boosted.slice(0, 1200))}` +
+    `?width=${width}&height=${height}&nologo=true&model=${encodeURIComponent(model)}`
   );
 }
 
