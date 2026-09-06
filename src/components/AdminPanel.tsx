@@ -184,6 +184,7 @@ export function AdminPanel({
   const [modeNote, setModeNote] = useState("");
   const [pending, setPending] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [generatingCover, setGeneratingCover] = useState(false);
 
   const sorted = useMemo(
     () => [...articles].sort((a, b) => b.publishedAt.localeCompare(a.publishedAt)),
@@ -441,6 +442,47 @@ export function AdminPanel({
       if (result.url) onUrl(result.url);
     } finally {
       setUploading(false);
+    }
+  }
+
+  async function handleGenerateCover() {
+    if (!draft) return;
+    if (!draft.title.trim()) {
+      setError("Indiquez un titre avant de générer la couverture.");
+      return;
+    }
+    setGeneratingCover(true);
+    setError("");
+    setModeNote("");
+    try {
+      const res = await fetch("/api/admin/generate-cover", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: draft.title,
+          excerpt: draft.excerpt,
+          rubrique: draft.rubric,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(
+          data.message ||
+            data.error ||
+            "Échec de la génération IA de la couverture.",
+        );
+        return;
+      }
+      if (typeof data.url === "string" && data.url) {
+        setDraft((d) => (d ? { ...d, coverImage: data.url as string } : d));
+        setModeNote("Couverture IA générée — vérifiez l'aperçu avant d'enregistrer.");
+      } else {
+        setError("Réponse IA sans URL d'image.");
+      }
+    } catch {
+      setError("Erreur réseau pendant la génération de couverture.");
+    } finally {
+      setGeneratingCover(false);
     }
   }
 
@@ -743,7 +785,7 @@ export function AdminPanel({
                       type="file"
                       accept="image/*,.svg"
                       className="sr-only"
-                      disabled={uploading}
+                      disabled={uploading || generatingCover}
                       onChange={(e) =>
                         handleUpload(e.target.files?.[0] ?? null, (url) =>
                           setDraft((d) => (d ? { ...d, coverImage: url } : d)),
@@ -751,6 +793,15 @@ export function AdminPanel({
                       }
                     />
                   </label>
+                  <button
+                    type="button"
+                    onClick={handleGenerateCover}
+                    disabled={uploading || generatingCover || !draft.title.trim()}
+                    className="inline-flex items-center gap-2 text-xs font-semibold border border-fernent-red bg-fernent-red text-white px-3 py-1.5 hover:bg-fernent-red-deep disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Génère une couverture avec NVIDIA FLUX à partir du titre, de l'extrait et de la rubrique"
+                  >
+                    {generatingCover ? "Génération…" : "Générer une couverture IA"}
+                  </button>
                   {draft.coverImage && (
                     <div className="relative h-16 w-28 border border-rule overflow-hidden bg-rule">
                       <Image
@@ -758,11 +809,19 @@ export function AdminPanel({
                         alt=""
                         fill
                         className="object-cover"
-                        unoptimized={draft.coverImage.endsWith(".svg")}
+                        unoptimized={
+                          draft.coverImage.endsWith(".svg") ||
+                          draft.coverImage.startsWith("data:")
+                        }
                       />
                     </div>
                   )}
                 </div>
+                {generatingCover && (
+                  <p className="mt-2 text-xs text-muted">
+                    Génération FLUX en cours (10–30 s)…
+                  </p>
+                )}
               </div>
               <div>
                 <label className="block text-xs font-semibold mb-1">
