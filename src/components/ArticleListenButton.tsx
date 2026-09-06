@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { buildArticleListenText } from "@/lib/article-audio";
 import { useLanguage } from "@/lib/i18n/LanguageProvider";
+import { LoadingDots } from "@/components/LoadingDots";
 
 type Props = {
   title: string;
@@ -280,8 +281,8 @@ export function ArticleListenButton({
           </button>
         )}
         {state === "loading" && (
-          <button type="button" disabled className={btnClass}>
-            {t.article.listenLoading}
+          <button type="button" disabled className={btnClass} aria-busy="true">
+            <LoadingDots label={t.article.listenLoading} tone="red" size="sm" />
           </button>
         )}
         {state === "speaking" && (

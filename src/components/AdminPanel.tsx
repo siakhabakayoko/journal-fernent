@@ -13,6 +13,7 @@ import type {
   ContactMessageStatus,
 } from "@/lib/types";
 import { useLanguage } from "@/lib/i18n/LanguageProvider";
+import { LoadingDots } from "@/components/LoadingDots";
 
 const RUBRIC_OPTIONS: Rubric[] = [
   "senegal",
@@ -714,7 +715,7 @@ export function AdminPanel({
           <button
             type="submit"
             disabled={pending}
-            className="bg-fernent-red px-4 py-2.5 text-sm font-bold uppercase tracking-wider text-white hover:bg-fernent-red-deep disabled:opacity-60 transition-colors"
+            className="inline-flex items-center justify-center gap-2 bg-fernent-red px-4 py-2.5 text-sm font-bold uppercase tracking-wider text-white hover:bg-fernent-red-deep disabled:opacity-60 transition-colors"
           >
             {t.admin.login}
           </button>
@@ -899,7 +900,11 @@ export function AdminPanel({
                     className="inline-flex items-center gap-2 text-xs font-semibold border border-fernent-red bg-fernent-red text-white px-3 py-1.5 hover:bg-fernent-red-deep disabled:opacity-50 disabled:cursor-not-allowed"
                     title="Requiert titre, extrait et rubrique — génère une couverture IA (FLUX.1-dev ou repli)"
                   >
-                    {generatingCover ? "Génération…" : "Générer une couverture IA"}
+                    {generatingCover ? (
+                      <LoadingDots label="Génération" tone="white" size="sm" />
+                    ) : (
+                      "Générer une couverture IA"
+                    )}
                   </button>
                   {draft.coverImage && (
                     <div className="relative h-16 w-28 border border-rule overflow-hidden bg-rule">
@@ -919,7 +924,11 @@ export function AdminPanel({
                 </div>
                 {generatingCover && (
                   <p className="mt-2 text-xs text-muted">
-                    Génération de couverture en cours (environ 10–30 s)…
+                    <LoadingDots
+                      label="Génération de couverture en cours (environ 10–30 s)"
+                      tone="muted"
+                      size="sm"
+                    />
                   </p>
                 )}
               </div>
@@ -950,7 +959,15 @@ export function AdminPanel({
                   disabled={pending}
                   className="bg-fernent-red px-4 py-2.5 text-sm font-bold uppercase tracking-wider text-white hover:bg-fernent-red-deep disabled:opacity-60 transition-colors"
                 >
-                  {pending ? "Enregistrement / audio…" : t.admin.save}
+                  {pending ? (
+                    <LoadingDots
+                      label="Enregistrement / audio"
+                      tone="white"
+                      size="sm"
+                    />
+                  ) : (
+                    t.admin.save
+                  )}
                 </button>
                 <button
                   type="button"

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import type { RagSource } from "@/lib/rag/types";
+import { LoadingDots } from "@/components/LoadingDots";
 
 type UiMessage = {
   id: string;
@@ -119,21 +120,27 @@ export function ChatWidget() {
   if (hidden) return null;
 
   return (
-    <div className="pointer-events-none fixed bottom-4 right-4 z-[60] flex flex-col items-end gap-3 sm:bottom-6 sm:right-6">
+    <div
+      className="pointer-events-none fixed z-[60] flex max-h-[calc(100dvh-max(0.75rem,env(safe-area-inset-top,0px))-max(0.75rem,env(safe-area-inset-bottom,0px)))] flex-col gap-3 left-[max(0.75rem,env(safe-area-inset-left,0px))] right-[max(0.75rem,env(safe-area-inset-right,0px))] bottom-[max(0.75rem,env(safe-area-inset-bottom,0px))] sm:left-auto sm:right-[max(1.5rem,env(safe-area-inset-right,0px))] sm:bottom-[max(1.5rem,env(safe-area-inset-bottom,0px))] sm:w-[380px] sm:max-w-[calc(100dvw-3rem)] sm:items-end"
+    >
       {open && (
         <section
           id={panelId}
           role="dialog"
           aria-label="Assistant Ferñent"
-          className="pointer-events-auto flex h-[min(70vh,560px)] w-[min(calc(100vw-2rem),380px)] flex-col overflow-hidden rounded-2xl border border-rule bg-paper-elevated shadow-[0_12px_40px_rgba(20,17,15,0.18)]"
+          className="pointer-events-auto flex w-full min-h-0 flex-col overflow-hidden rounded-2xl border border-rule bg-paper-elevated shadow-[0_12px_40px_rgba(20,17,15,0.18)] max-h-[min(70dvh,calc(100dvh-5.5rem-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px)))] h-[min(560px,calc(100dvh-5.5rem-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px)))]"
         >
-          <header className="flex items-center gap-3 border-b border-rule bg-fernent-red px-4 py-3 text-white">
-            <span
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-white/15 font-serif text-lg font-bold"
+          <header className="flex shrink-0 items-center gap-3 border-b border-rule bg-fernent-red px-4 py-3 text-white">
+            {/* Site favicon — same asset as layout metadata icons.icon */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/favicon.ico"
+              alt=""
+              width={36}
+              height={36}
+              className="h-9 w-9 shrink-0 rounded-full bg-white/15 object-contain p-1.5"
               aria-hidden
-            >
-              F
-            </span>
+            />
             <div className="min-w-0 flex-1">
               <p className="truncate font-serif text-base font-bold leading-tight">
                 Assistant Ferñent
@@ -156,7 +163,7 @@ export function ChatWidget() {
 
           <div
             ref={listRef}
-            className="flex-1 space-y-3 overflow-y-auto bg-paper px-3 py-3"
+            className="min-h-0 flex-1 space-y-3 overflow-x-hidden overflow-y-auto overscroll-contain bg-paper px-3 py-3"
           >
             {messages.map((m) => (
               <div
@@ -170,7 +177,7 @@ export function ChatWidget() {
                       : "border border-rule bg-paper-elevated text-ink"
                   }`}
                 >
-                  <p className="whitespace-pre-wrap">{m.content}</p>
+                  <p className="whitespace-pre-wrap break-words">{m.content}</p>
                   {m.sources && m.sources.length > 0 && (
                     <ul className="mt-2 space-y-1 border-t border-rule/80 pt-2 text-[11px]">
                       {m.sources.map((s) => (
@@ -193,14 +200,20 @@ export function ChatWidget() {
               </div>
             ))}
             {busy && (
-              <p className="text-xs text-muted" aria-live="polite">
-                Recherche dans Ferñent…
-              </p>
+              <div className="flex justify-start">
+                <div className="rounded-2xl border border-rule bg-paper-elevated px-3 py-2 text-sm text-muted">
+                  <LoadingDots
+                    label="Recherche dans Ferñent"
+                    tone="red"
+                    size="sm"
+                  />
+                </div>
+              </div>
             )}
           </div>
 
           <form
-            className="border-t border-rule bg-paper-elevated p-3"
+            className="shrink-0 border-t border-rule bg-paper-elevated p-3"
             onSubmit={(e) => {
               e.preventDefault();
               void send();
@@ -225,7 +238,7 @@ export function ChatWidget() {
                 }}
                 placeholder="Votre question…"
                 disabled={busy}
-                className="min-h-[44px] flex-1 resize-none rounded-xl border border-rule bg-paper px-3 py-2 text-sm text-ink placeholder:text-muted focus:border-fernent-red focus:outline-none"
+                className="min-h-[44px] max-h-28 flex-1 resize-none rounded-xl border border-rule bg-paper px-3 py-2 text-sm text-ink placeholder:text-muted focus:border-fernent-red focus:outline-none"
                 aria-label="Message à l'assistant"
               />
               <button
@@ -242,7 +255,7 @@ export function ChatWidget() {
 
       <button
         type="button"
-        className="pointer-events-auto inline-flex h-14 items-center gap-2 rounded-full bg-fernent-red px-4 text-sm font-semibold text-white shadow-[0_8px_24px_rgba(225,6,0,0.35)] hover:bg-fernent-red-deep focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fernent-red"
+        className="pointer-events-auto ml-auto inline-flex h-14 shrink-0 items-center gap-2 rounded-full bg-fernent-red px-4 text-sm font-semibold text-white shadow-[0_8px_24px_rgba(225,6,0,0.35)] hover:bg-fernent-red-deep focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fernent-red"
         aria-expanded={open}
         aria-controls={open ? panelId : undefined}
         onClick={() => setOpen((v) => !v)}
