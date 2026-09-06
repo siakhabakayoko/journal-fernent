@@ -457,8 +457,8 @@ export function AdminPanel({
     setError("");
     setModeNote("");
     const controller = new AbortController();
-    // Align with server FLUX timeout (~270s) + margin under maxDuration 300.
-    const timer = window.setTimeout(() => controller.abort(), 280_000);
+    // Align with server total budget (~55s NVIDIA+fallback) under maxDuration 60.
+    const timer = window.setTimeout(() => controller.abort(), 60_000);
     try {
       const res = await fetch("/api/admin/generate-cover", {
         method: "POST",
@@ -474,6 +474,7 @@ export function AdminPanel({
         message?: string;
         error?: string;
         url?: string;
+        provider?: string;
       };
       if (!res.ok) {
         const detail =
@@ -488,8 +489,14 @@ export function AdminPanel({
       }
       if (typeof data.url === "string" && data.url) {
         setDraft((d) => (d ? { ...d, coverImage: data.url as string } : d));
+        const providerLabel =
+          data.provider === "pollinations"
+            ? "Pollinations"
+            : data.provider === "nvidia-flux"
+              ? "NVIDIA FLUX"
+              : "IA";
         setModeNote(
-          "Couverture IA générée — vérifiez l'aperçu avant d'enregistrer.",
+          `Couverture générée via ${providerLabel} — vérifiez l'aperçu avant d'enregistrer.`,
         );
       } else {
         setError("Réponse IA sans URL d'image.");
@@ -497,7 +504,7 @@ export function AdminPanel({
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") {
         setError(
-          "Délai dépassé : la génération FLUX n'a pas répondu à temps. Réessayez.",
+          "Délai dépassé : la génération de couverture n'a pas répondu à temps. Réessayez.",
         );
       } else {
         setError(
@@ -876,7 +883,7 @@ export function AdminPanel({
                       !draft.rubric
                     }
                     className="inline-flex items-center gap-2 text-xs font-semibold border border-fernent-red bg-fernent-red text-white px-3 py-1.5 hover:bg-fernent-red-deep disabled:opacity-50 disabled:cursor-not-allowed"
-                    title="Requiert titre, extrait et rubrique — génère une couverture NVIDIA FLUX"
+                    title="Requiert titre, extrait et rubrique — génère une couverture IA (FLUX ou repli)"
                   >
                     {generatingCover ? "Génération…" : "Générer une couverture IA"}
                   </button>
@@ -897,7 +904,7 @@ export function AdminPanel({
                 </div>
                 {generatingCover && (
                   <p className="mt-2 text-xs text-muted">
-                    Génération FLUX en cours (peut prendre jusqu&apos;à une minute)…
+                    Génération de couverture en cours (environ 10–30 s)…
                   </p>
                 )}
               </div>

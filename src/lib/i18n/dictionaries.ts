@@ -116,6 +116,8 @@ export const dictionaries = {
       unsupported: "Lecture audio non disponible sur cet appareil.",
       listenLoading: "Préparation audio…",
       listenError: "Synthèse vocale indisponible pour le moment. Réessayez plus tard.",
+      listenPermissionDenied:
+        "La lecture audio a été bloquée par le navigateur. Réessayez en cliquant à nouveau sur Écouter.",
     },
     contact: {
       title: "Contact",
@@ -360,6 +362,8 @@ export const dictionaries = {
       unsupported: "Déglu audio amul ci aparel bii.",
       listenLoading: "Audio a ngi waaj…",
       listenError: "Déglu vocal amul léegi. Jéemaatal ci kanam.",
+      listenPermissionDenied:
+        "Navigateur bi tëj na déglu bi. Bësal ci Déglu bañ bañ.",
     },
     contact: {
       title: "Jokkalante",

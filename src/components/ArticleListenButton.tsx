@@ -11,11 +11,29 @@ type Props = {
 
 type SpeakState = "idle" | "loading" | "speaking" | "paused" | "error";
 
+/** Tiny silent WAV (~0.05s) — unlocks HTMLAudioElement within a user gesture. */
+const SILENT_WAV =
+  "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=";
+
 function buildPlainText(title: string, excerpt: string, body: string): string {
   const paragraphs = body.split(/\n\n+/).map((p) => p.trim()).filter(Boolean);
   return [title.trim(), excerpt.trim(), ...paragraphs]
     .filter(Boolean)
     .join("\n\n");
+}
+
+function isNotAllowedError(err: unknown): boolean {
+  if (err instanceof DOMException && err.name === "NotAllowedError") return true;
+  if (!(err instanceof Error)) return false;
+  const msg = err.message.toLowerCase();
+  return (
+    err.name === "NotAllowedError" ||
+    msg.includes("notallowederror") ||
+    msg.includes("not allowed by the user agent") ||
+    msg.includes("user denied permission") ||
+    msg.includes("play() failed because the user") ||
+    msg.includes("the request is not allowed")
+  );
 }
 
 const btnClass =
@@ -28,16 +46,78 @@ export function ArticleListenButton({ title, excerpt, body }: Props) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const objectUrlRef = useRef<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const audioCtxRef = useRef<AudioContext | null>(null);
 
-  function cleanupAudio() {
+  function permissionDeniedMessage(): string {
+    return (
+      t.article.listenPermissionDenied ||
+      "La lecture audio a été bloquée par le navigateur. Réessayez en cliquant à nouveau sur Écouter."
+    );
+  }
+
+  function mapErrorMessage(err: unknown): string {
+    if (isNotAllowedError(err)) return permissionDeniedMessage();
+    if (err instanceof Error && err.message) {
+      const lower = err.message.toLowerCase();
+      if (
+        lower.includes("not allowed by the user agent") ||
+        lower.includes("user denied permission") ||
+        lower.includes("the request is not allowed")
+      ) {
+        return permissionDeniedMessage();
+      }
+      return err.message;
+    }
+    return t.article.listenError;
+  }
+
+  /**
+   * Unlock autoplay within the click gesture: resume AudioContext and
+   * briefly play a silent WAV on the same HTMLAudioElement used later.
+   */
+  async function unlockAudioPlayback(): Promise<void> {
+    try {
+      const AC =
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext?: typeof AudioContext })
+          .webkitAudioContext;
+      if (AC) {
+        if (!audioCtxRef.current) {
+          audioCtxRef.current = new AC();
+        }
+        if (audioCtxRef.current.state === "suspended") {
+          await audioCtxRef.current.resume();
+        }
+      }
+    } catch {
+      // AudioContext optional — silent WAV unlock is the primary path.
+    }
+
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.setAttribute("playsinline", "true");
+    audio.setAttribute("webkit-playsinline", "true");
+    audio.src = SILENT_WAV;
+    audio.currentTime = 0;
+    try {
+      await audio.play();
+      audio.pause();
+      audio.currentTime = 0;
+    } catch {
+      // If unlock fails here, real play may still work or surface NotAllowedError.
+    }
+  }
+
+  function cleanupPlayback() {
     abortRef.current?.abort();
     abortRef.current = null;
     const audio = audioRef.current;
     if (audio) {
       audio.pause();
+      audio.onended = null;
+      audio.onerror = null;
       audio.removeAttribute("src");
       audio.load();
-      audioRef.current = null;
     }
     if (objectUrlRef.current) {
       URL.revokeObjectURL(objectUrlRef.current);
@@ -46,22 +126,32 @@ export function ArticleListenButton({ title, excerpt, body }: Props) {
   }
 
   useEffect(() => {
-    return () => cleanupAudio();
+    return () => {
+      cleanupPlayback();
+      const ctx = audioCtxRef.current;
+      audioCtxRef.current = null;
+      if (ctx && ctx.state !== "closed") {
+        void ctx.close().catch(() => undefined);
+      }
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Reset when article content changes
   useEffect(() => {
-    cleanupAudio();
+    cleanupPlayback();
     setState("idle");
     setErrorMsg("");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [title, excerpt, body]);
 
   async function start() {
-    cleanupAudio();
+    cleanupPlayback();
     setErrorMsg("");
     setState("loading");
+
+    // Critical: unlock within the user gesture BEFORE the long TTS await.
+    await unlockAudioPlayback();
 
     const controller = new AbortController();
     abortRef.current = controller;
@@ -96,8 +186,14 @@ export function ArticleListenButton({ title, excerpt, body }: Props) {
 
       const url = URL.createObjectURL(blob);
       objectUrlRef.current = url;
-      const audio = new Audio(url);
-      audioRef.current = audio;
+
+      const audio = audioRef.current;
+      if (!audio) {
+        throw new Error(t.article.unsupported || t.article.listenError);
+      }
+
+      audio.src = url;
+      audio.load();
 
       audio.onended = () => {
         setState("idle");
@@ -107,6 +203,7 @@ export function ArticleListenButton({ title, excerpt, body }: Props) {
         setErrorMsg(t.article.listenError);
       };
 
+      // Same unlocked element — gesture already consumed via silent play.
       await audio.play();
       setState("speaking");
     } catch (err) {
@@ -115,11 +212,7 @@ export function ArticleListenButton({ title, excerpt, body }: Props) {
         return;
       }
       setState("error");
-      setErrorMsg(
-        err instanceof Error && err.message
-          ? err.message
-          : t.article.listenError,
-      );
+      setErrorMsg(mapErrorMessage(err));
     }
   }
 
@@ -129,17 +222,30 @@ export function ArticleListenButton({ title, excerpt, body }: Props) {
   }
 
   function resume() {
-    void audioRef.current?.play().then(() => setState("speaking"));
+    void audioRef.current
+      ?.play()
+      .then(() => setState("speaking"))
+      .catch((err) => {
+        setState("error");
+        setErrorMsg(mapErrorMessage(err));
+      });
   }
 
   function stop() {
-    cleanupAudio();
+    cleanupPlayback();
     setState("idle");
     setErrorMsg("");
   }
 
   return (
     <div className="flex flex-col gap-1.5" role="group" aria-label={t.article.listen}>
+      <audio
+        ref={audioRef}
+        playsInline
+        preload="auto"
+        className="hidden"
+        aria-hidden
+      />
       <div className="flex flex-wrap items-center gap-2">
         {state === "idle" && (
           <button type="button" onClick={() => void start()} className={btnClass}>

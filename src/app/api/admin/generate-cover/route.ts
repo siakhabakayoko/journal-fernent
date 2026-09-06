@@ -4,19 +4,19 @@ import path from "path";
 import { put } from "@vercel/blob";
 import { isAdminAuthenticated } from "@/lib/auth";
 import {
+  COVER_TOTAL_TIMEOUT_MS,
   FLUX_DEFAULT_SIZE,
   FLUX_FETCH_TIMEOUT_MS,
   fluxHealthStatus,
-  generateFluxImage,
+  generateCoverImage,
   hasNvidiaApiKey,
 } from "@/lib/nvidia";
 
 export const runtime = "nodejs";
 /**
- * FLUX can take 10–60s+ on cold start. Fluid / Hobby with Fluid Compute
- * allows up to 300s; classic Hobby caps at 60 (Vercel clamps if unsupported).
+ * NVIDIA attempt ~35s + Pollinations ~20s. Align with Hobby ~60s cap.
  */
-export const maxDuration = 300;
+export const maxDuration = 60;
 
 const RUBRIC_HINTS: Record<string, string> = {
   senegal:
@@ -124,8 +124,9 @@ export async function GET() {
   const health = fluxHealthStatus();
   return NextResponse.json({
     ...health,
-    maxDuration: 300,
+    maxDuration: 60,
     fetchTimeoutMs: FLUX_FETCH_TIMEOUT_MS,
+    totalTimeoutMs: COVER_TOTAL_TIMEOUT_MS,
     blobConfigured: Boolean(process.env.BLOB_READ_WRITE_TOKEN?.trim()),
   });
 }
@@ -133,17 +134,6 @@ export async function GET() {
 export async function POST(request: Request) {
   if (!(await isAdminAuthenticated())) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
-
-  if (!hasNvidiaApiKey()) {
-    return NextResponse.json(
-      {
-        error: "missing_api_key",
-        message:
-          "NVIDIA_API_KEY n'est pas configurée. Ajoutez-la dans Vercel (Environment Variables) ou .env.local.",
-      },
-      { status: 503 },
-    );
   }
 
   let body: unknown;
@@ -200,7 +190,7 @@ export async function POST(request: Request) {
   });
 
   try {
-    const { bytes, mimeType } = await generateFluxImage(prompt, {
+    const { bytes, mimeType, provider } = await generateCoverImage(prompt, {
       width: FLUX_DEFAULT_SIZE,
       height: FLUX_DEFAULT_SIZE,
       seed: 0,
@@ -209,10 +199,18 @@ export async function POST(request: Request) {
       timeoutMs: FLUX_FETCH_TIMEOUT_MS,
     });
     const url = await storeCoverImage(bytes, mimeType);
-    return NextResponse.json({ url, prompt });
+    console.info("[generate-cover] provider=", provider, "nvidiaKey=", hasNvidiaApiKey());
+    return NextResponse.json(
+      { url, prompt, provider },
+      {
+        headers: {
+          "X-Image-Provider": provider,
+        },
+      },
+    );
   } catch (err) {
     const message =
-      err instanceof Error ? err.message : "Échec de la génération FLUX.";
+      err instanceof Error ? err.message : "Échec de la génération d'image.";
     console.error("[generate-cover]", message);
     const timedOut = /délai dépassé/i.test(message);
     return NextResponse.json(

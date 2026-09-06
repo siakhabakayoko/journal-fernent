@@ -1,10 +1,9 @@
 /**
- * NVIDIA Build — FLUX.1-schnell image generation client.
+ * NVIDIA Build — FLUX.1-schnell image generation client + Pollinations fallback.
  * Docs: https://docs.api.nvidia.com/nim/reference/black-forest-labs-flux_1-schnell-infer
  *
- * Hosted invoke URL uses a DOT in the model id:
+ * Hosted invoke URL (public snippet — no NVCF UUID for this model):
  *   https://ai.api.nvidia.com/v1/genai/black-forest-labs/flux.1-schnell
- * (underscore path 404s).
  *
  * Response shape (hosted Build API): { artifacts: [{ base64: string, finishReason?: string }] }
  * Also tolerates OpenAI-style { data: [{ b64_json }] } and bare { image }.
@@ -16,8 +15,18 @@ export const FLUX_SCHNELL_URL =
 /** Documented sizes for hosted FLUX.1-schnell (1024 preferred; 512 often 422s). */
 export const FLUX_DEFAULT_SIZE = 1024 as const;
 
-/** Server-side fetch budget (ms). Keep under Vercel maxDuration. */
-export const FLUX_FETCH_TIMEOUT_MS = 270_000;
+/**
+ * Short NVIDIA attempt budget. ai.api.nvidia.com often hangs with 0-byte
+ * responses from some environments; Vercel Hobby also caps ~60s.
+ */
+export const FLUX_FETCH_TIMEOUT_MS = 35_000;
+
+/** Overall client/server budget including Pollinations fallback. */
+export const COVER_TOTAL_TIMEOUT_MS = 55_000;
+
+export const POLLINATIONS_TIMEOUT_MS = 20_000;
+
+export type ImageProvider = "nvidia-flux" | "pollinations";
 
 export type FluxGenerateOptions = {
   width?: number;
@@ -36,6 +45,8 @@ export type FluxGenerateResult = {
   base64: string;
   /** Best-effort MIME type. */
   mimeType: string;
+  /** Which backend produced the image. */
+  provider: ImageProvider;
 };
 
 export function hasNvidiaApiKey(): boolean {
@@ -69,6 +80,26 @@ function isAbortError(err: unknown): boolean {
   if (!err || typeof err !== "object") return false;
   const name = (err as { name?: string }).name;
   return name === "AbortError" || name === "TimeoutError";
+}
+
+function mergeSignals(
+  external: AbortSignal | undefined,
+  timeoutMs: number,
+): { signal: AbortSignal; cleanup: () => void } {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  const onExternalAbort = () => controller.abort();
+  if (external) {
+    if (external.aborted) controller.abort();
+    else external.addEventListener("abort", onExternalAbort, { once: true });
+  }
+  return {
+    signal: controller.signal,
+    cleanup: () => {
+      clearTimeout(timer);
+      if (external) external.removeEventListener("abort", onExternalAbort);
+    },
+  };
 }
 
 /** Extract base64 image payload from various NVIDIA / NIM response shapes. */
@@ -116,22 +147,24 @@ export function fluxHealthStatus(): {
   ok: boolean;
   hasKey: boolean;
   url: string;
+  fallback: string;
   message: string;
 } {
   const hasKey = hasNvidiaApiKey();
   return {
-    ok: hasKey,
+    ok: true, // Pollinations fallback always available
     hasKey,
     url: FLUX_SCHNELL_URL,
+    fallback: "pollinations",
     message: hasKey
-      ? "NVIDIA_API_KEY présente — prêt pour FLUX.1-schnell."
-      : "NVIDIA_API_KEY absente.",
+      ? "NVIDIA_API_KEY présente — FLUX puis repli Pollinations."
+      : "NVIDIA_API_KEY absente — génération via Pollinations.",
   };
 }
 
 /**
  * Call NVIDIA Build FLUX.1-schnell and return image bytes + base64.
- * Body matches the documented Infer contract (cfg_scale, mode, samples, seed, steps).
+ * Public sample body: { prompt, width, height, seed, steps }.
  */
 export async function generateFluxImage(
   prompt: string,
@@ -149,26 +182,16 @@ export async function generateFluxImage(
   const steps = Math.min(4, Math.max(1, opts.steps ?? 4));
   const timeoutMs = opts.timeoutMs ?? FLUX_FETCH_TIMEOUT_MS;
 
-  // Documented hosted Infer payload (only 1024×1024 reliably accepted).
+  // Public hosted sample fields (+ cfg_scale tolerated by the API).
   const body = {
     prompt: trimmed,
     height,
     width,
-    cfg_scale: 0,
-    mode: "base",
-    samples: 1,
     seed,
     steps,
   };
 
-  const controller = new AbortController();
-  const external = opts.signal;
-  const onExternalAbort = () => controller.abort();
-  if (external) {
-    if (external.aborted) controller.abort();
-    else external.addEventListener("abort", onExternalAbort, { once: true });
-  }
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  const { signal, cleanup } = mergeSignals(opts.signal, timeoutMs);
 
   const started = Date.now();
   console.info("[nvidia/flux] POST", FLUX_SCHNELL_URL, {
@@ -177,6 +200,7 @@ export async function generateFluxImage(
     steps,
     seed,
     promptLen: trimmed.length,
+    timeoutMs,
   });
 
   try {
@@ -188,7 +212,7 @@ export async function generateFluxImage(
         "Content-Type": "application/json",
       },
       body: JSON.stringify(body),
-      signal: controller.signal,
+      signal,
     });
 
     const text = await res.text();
@@ -224,16 +248,127 @@ export async function generateFluxImage(
       mimeType,
     });
 
-    return { bytes, base64, mimeType };
+    return { bytes, base64, mimeType, provider: "nvidia-flux" };
   } catch (err) {
     if (isAbortError(err)) {
       throw new Error(
-        `Délai dépassé : la génération FLUX n'a pas répondu à temps (${Math.round(timeoutMs / 1000)} s). Réessayez ou vérifiez NVIDIA Build.`,
+        `Délai dépassé : la génération FLUX n'a pas répondu à temps (${Math.round(timeoutMs / 1000)} s).`,
       );
     }
     throw err;
   } finally {
-    clearTimeout(timer);
-    if (external) external.removeEventListener("abort", onExternalAbort);
+    cleanup();
   }
+}
+
+/**
+ * Fast Pollinations text-to-image fallback (returns JPEG/PNG in ~2–3s).
+ * https://image.pollinations.ai/prompt/{encodeURIComponent(prompt)}?...
+ */
+export async function generatePollinationsImage(
+  prompt: string,
+  opts: {
+    width?: number;
+    height?: number;
+    signal?: AbortSignal;
+    timeoutMs?: number;
+  } = {},
+): Promise<FluxGenerateResult> {
+  const trimmed = prompt.trim();
+  if (!trimmed) throw new Error("Le prompt est vide.");
+
+  const width = opts.width ?? FLUX_DEFAULT_SIZE;
+  const height = opts.height ?? FLUX_DEFAULT_SIZE;
+  const timeoutMs = opts.timeoutMs ?? POLLINATIONS_TIMEOUT_MS;
+
+  // Keep prompt reasonably short for URL length limits.
+  const shortPrompt = trimmed.slice(0, 1200);
+  const url =
+    `https://image.pollinations.ai/prompt/${encodeURIComponent(shortPrompt)}` +
+    `?width=${width}&height=${height}&nologo=true&model=flux`;
+
+  const { signal, cleanup } = mergeSignals(opts.signal, timeoutMs);
+  const started = Date.now();
+  console.info("[pollinations] GET", {
+    width,
+    height,
+    promptLen: shortPrompt.length,
+    timeoutMs,
+  });
+
+  try {
+    const res = await fetch(url, {
+      method: "GET",
+      headers: { Accept: "image/*" },
+      signal,
+      redirect: "follow",
+    });
+
+    if (!res.ok) {
+      throw new Error(`Pollinations erreur HTTP ${res.status}`);
+    }
+
+    const ab = await res.arrayBuffer();
+    const bytes = Buffer.from(ab);
+    if (bytes.length < 32) {
+      throw new Error("Image Pollinations trop courte.");
+    }
+    const mimeType =
+      res.headers.get("content-type")?.split(";")[0]?.trim() ||
+      guessMimeFromBytes(bytes);
+    const base64 = bytes.toString("base64");
+
+    console.info("[pollinations] ok", {
+      ms: Date.now() - started,
+      bytes: bytes.length,
+      mimeType,
+    });
+
+    return { bytes, base64, mimeType, provider: "pollinations" };
+  } catch (err) {
+    if (isAbortError(err)) {
+      throw new Error(
+        `Délai dépassé : Pollinations n'a pas répondu à temps (${Math.round(timeoutMs / 1000)} s).`,
+      );
+    }
+    throw err;
+  } finally {
+    cleanup();
+  }
+}
+
+/**
+ * Prefer NVIDIA FLUX when key present; always fall back to Pollinations.
+ */
+export async function generateCoverImage(
+  prompt: string,
+  opts: FluxGenerateOptions = {},
+): Promise<FluxGenerateResult> {
+  const width = opts.width ?? FLUX_DEFAULT_SIZE;
+  const height = opts.height ?? FLUX_DEFAULT_SIZE;
+
+  if (hasNvidiaApiKey()) {
+    try {
+      return await generateFluxImage(prompt, {
+        ...opts,
+        width,
+        height,
+        timeoutMs: opts.timeoutMs ?? FLUX_FETCH_TIMEOUT_MS,
+      });
+    } catch (err) {
+      console.warn(
+        "[cover] NVIDIA FLUX failed, falling back to Pollinations:",
+        err instanceof Error ? err.message : err,
+      );
+    }
+  } else {
+    console.info("[cover] no NVIDIA_API_KEY — using Pollinations");
+  }
+
+  return generatePollinationsImage(prompt, {
+    width,
+    height,
+    signal: opts.signal,
+    timeoutMs: POLLINATIONS_TIMEOUT_MS,
+  });
 }
