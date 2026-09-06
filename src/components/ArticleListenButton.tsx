@@ -49,6 +49,7 @@ export function ArticleListenButton({
   const objectUrlRef = useRef<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
+  const preloadedUrlRef = useRef<string | null>(null);
 
   function permissionDeniedMessage(): string {
     return (
@@ -97,6 +98,10 @@ export function ArticleListenButton({
 
     const audio = audioRef.current;
     if (!audio) return;
+    // If we already preloaded the real Blob URL, do not clobber it with silence.
+    if (preloadedUrlRef.current && audio.src && !audio.src.startsWith("data:")) {
+      return;
+    }
     audio.setAttribute("playsinline", "true");
     audio.setAttribute("webkit-playsinline", "true");
     audio.src = SILENT_WAV;
@@ -110,7 +115,7 @@ export function ArticleListenButton({
     }
   }
 
-  function cleanupPlayback() {
+  function cleanupPlayback(opts?: { keepPreload?: boolean }) {
     abortRef.current?.abort();
     abortRef.current = null;
     const audio = audioRef.current;
@@ -118,13 +123,31 @@ export function ArticleListenButton({
       audio.pause();
       audio.onended = null;
       audio.onerror = null;
-      audio.removeAttribute("src");
-      audio.load();
+      audio.onwaiting = null;
+      audio.onplaying = null;
+      if (!opts?.keepPreload) {
+        audio.removeAttribute("src");
+        audio.load();
+        preloadedUrlRef.current = null;
+      }
     }
     if (objectUrlRef.current) {
       URL.revokeObjectURL(objectUrlRef.current);
       objectUrlRef.current = null;
     }
+  }
+
+  /** Warm the Blob/CDN cache on hover/focus when a stored audioUrl exists. */
+  function preloadStoredAudio() {
+    const stored = audioUrl?.trim();
+    const audio = audioRef.current;
+    if (!stored || !audio) return;
+    if (preloadedUrlRef.current === stored) return;
+    if (state === "speaking" || state === "paused" || state === "loading") return;
+    audio.preload = "auto";
+    audio.src = stored;
+    audio.load();
+    preloadedUrlRef.current = stored;
   }
 
   useEffect(() => {
@@ -147,14 +170,41 @@ export function ArticleListenButton({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [title, excerpt, body, audioUrl]);
 
+  function waitUntilCanPlay(audio: HTMLAudioElement): Promise<void> {
+    if (audio.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) {
+      return Promise.resolve();
+    }
+    return new Promise((resolve, reject) => {
+      const onReady = () => {
+        cleanup();
+        resolve();
+      };
+      const onError = () => {
+        cleanup();
+        reject(new Error(t.article.listenError));
+      };
+      const cleanup = () => {
+        audio.removeEventListener("canplay", onReady);
+        audio.removeEventListener("loadeddata", onReady);
+        audio.removeEventListener("error", onError);
+      };
+      audio.addEventListener("canplay", onReady, { once: true });
+      audio.addEventListener("loadeddata", onReady, { once: true });
+      audio.addEventListener("error", onError, { once: true });
+    });
+  }
+
   async function playFromUrl(url: string): Promise<void> {
     const audio = audioRef.current;
     if (!audio) {
       throw new Error(t.article.unsupported || t.article.listenError);
     }
 
-    audio.src = url;
-    audio.load();
+    if (preloadedUrlRef.current !== url || !audio.src || audio.src.startsWith("data:")) {
+      audio.src = url;
+      audio.load();
+      preloadedUrlRef.current = url.startsWith("blob:") ? null : url;
+    }
 
     audio.onended = () => {
       setState("idle");
@@ -163,13 +213,22 @@ export function ArticleListenButton({
       setState("error");
       setErrorMsg(t.article.listenError);
     };
+    audio.onwaiting = () => {
+      setState((s) => (s === "speaking" || s === "loading" ? "loading" : s));
+    };
+    audio.onplaying = () => {
+      setState("speaking");
+    };
 
+    // Show dots only while buffering; start playback as soon as enough data.
+    await waitUntilCanPlay(audio);
     await audio.play();
     setState("speaking");
   }
 
   async function startFromStoredUrl(storedUrl: string) {
-    cleanupPlayback();
+    // Keep warm preload of the Blob URL — do not regenerate via /api/tts.
+    cleanupPlayback({ keepPreload: preloadedUrlRef.current === storedUrl });
     setErrorMsg("");
     setState("loading");
     await unlockAudioPlayback();
@@ -259,7 +318,11 @@ export function ArticleListenButton({
   }
 
   function stop() {
-    cleanupPlayback();
+    cleanupPlayback({ keepPreload: Boolean(audioUrl?.trim()) });
+    // Re-arm preload target without forcing a full re-fetch if browser kept cache.
+    if (audioUrl?.trim()) {
+      preloadedUrlRef.current = null;
+    }
     setState("idle");
     setErrorMsg("");
   }
@@ -269,20 +332,31 @@ export function ArticleListenButton({
       <audio
         ref={audioRef}
         playsInline
-        preload="auto"
+        preload={audioUrl?.trim() ? "metadata" : "none"}
         className="hidden"
         aria-hidden
       />
       <div className="flex flex-wrap items-center gap-2">
         {state === "idle" && (
-          <button type="button" onClick={() => void start()} className={btnClass}>
+          <button
+            type="button"
+            onClick={() => void start()}
+            onMouseEnter={preloadStoredAudio}
+            onFocus={preloadStoredAudio}
+            onTouchStart={preloadStoredAudio}
+            className={btnClass}
+          >
             <ListenIcon />
             {t.article.listen}
           </button>
         )}
         {state === "loading" && (
           <button type="button" disabled className={btnClass} aria-busy="true">
-            <LoadingDots label={t.article.listenLoading} tone="red" size="sm" />
+            <LoadingDots
+              srLabel={t.article.listenLoading}
+              tone="red"
+              size="sm"
+            />
           </button>
         )}
         {state === "speaking" && (
@@ -307,7 +381,13 @@ export function ArticleListenButton({
         )}
         {state === "error" && (
           <>
-            <button type="button" onClick={() => void start()} className={btnClass}>
+            <button
+              type="button"
+              onClick={() => void start()}
+              onMouseEnter={preloadStoredAudio}
+              onFocus={preloadStoredAudio}
+              className={btnClass}
+            >
               <ListenIcon />
               {t.article.listen}
             </button>

@@ -76,7 +76,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "invalid" }, { status: 400 });
   }
   const rubric = RUBRICS.includes(body.rubric) ? (body.rubric as Rubric) : "senegal";
-  const coverImage = String(body.coverImage || "").trim() || undefined;
   const id =
     typeof body.id === "string" && body.id
       ? body.id
@@ -84,6 +83,15 @@ export async function POST(request: Request) {
 
   const existing = (await getArticles()).find((a) => a.id === id);
   const isCreate = !existing;
+
+  // Prefer explicit body.coverImage (incl. freshly generated Blob URL).
+  // Only fall back to existing when the field is omitted entirely.
+  const coverFromBody =
+    typeof body.coverImage === "string" ? body.coverImage.trim() : undefined;
+  const coverImage =
+    coverFromBody !== undefined
+      ? coverFromBody || undefined
+      : existing?.coverImage;
 
   const title = body.title.trim();
   const excerpt = String(body.excerpt || "").trim();
@@ -111,8 +119,9 @@ export async function POST(request: Request) {
     featured: Boolean(body.featured),
     commentsEnabled: body.commentsEnabled !== false,
     coverImage,
-    audioUrl: canSkipAudio ? existing!.audioUrl : undefined,
-    audioTextHash: canSkipAudio ? existing!.audioTextHash : undefined,
+    // Keep prior audio until regenerated so a failed TTS does not wipe a good URL.
+    audioUrl: canSkipAudio ? existing!.audioUrl : existing?.audioUrl,
+    audioTextHash: canSkipAudio ? existing!.audioTextHash : existing?.audioTextHash,
   };
 
   let result = await upsertArticle(article);

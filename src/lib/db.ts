@@ -199,7 +199,7 @@ export async function ensureSeeded(): Promise<void> {
               published_at = excluded.published_at,
               featured = excluded.featured,
               comments_enabled = excluded.comments_enabled,
-              cover_image = excluded.cover_image,
+              cover_image = COALESCE(NULLIF(articles.cover_image, ''), excluded.cover_image),
               audio_url = COALESCE(excluded.audio_url, articles.audio_url),
               audio_text_hash = COALESCE(excluded.audio_text_hash, articles.audio_text_hash)`,
           args: [

@@ -120,15 +120,28 @@ export function ChatWidget() {
   if (hidden) return null;
 
   return (
-    <div
-      className="pointer-events-none fixed z-[60] flex max-h-[calc(100dvh-max(0.75rem,env(safe-area-inset-top,0px))-max(0.75rem,env(safe-area-inset-bottom,0px)))] flex-col gap-3 left-[max(0.75rem,env(safe-area-inset-left,0px))] right-[max(0.75rem,env(safe-area-inset-right,0px))] bottom-[max(0.75rem,env(safe-area-inset-bottom,0px))] sm:left-auto sm:right-[max(1.5rem,env(safe-area-inset-right,0px))] sm:bottom-[max(1.5rem,env(safe-area-inset-bottom,0px))] sm:w-[380px] sm:max-w-[calc(100dvw-3rem)] sm:items-end"
-    >
+    <>
+      {/* Launcher — independent fixed control; does not share layout with panel */}
+      <button
+        type="button"
+        className="pointer-events-auto fixed z-[60] inline-flex h-14 items-center gap-2 rounded-full bg-fernent-red px-4 text-sm font-semibold text-white shadow-[0_8px_24px_rgba(225,6,0,0.35)] hover:bg-fernent-red-deep focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fernent-red right-[max(1rem,env(safe-area-inset-right,0px))] bottom-[max(1rem,env(safe-area-inset-bottom,0px))] sm:right-[max(1.5rem,env(safe-area-inset-right,0px))] sm:bottom-[max(1.5rem,env(safe-area-inset-bottom,0px))]"
+        aria-expanded={open}
+        aria-controls={open ? panelId : undefined}
+        onClick={() => setOpen((v) => !v)}
+      >
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>
+          <path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v7A2.5 2.5 0 0 1 17.5 16H9l-4 3.5V6.5Z" />
+          <path d="M8 9h8M8 12h5" />
+        </svg>
+        <span className="pr-1">{open ? "Fermer" : "Discuter"}</span>
+      </button>
+
       {open && (
         <section
           id={panelId}
           role="dialog"
           aria-label="Assistant Ferñent"
-          className="pointer-events-auto flex w-full min-h-0 flex-col overflow-hidden rounded-2xl border border-rule bg-paper-elevated shadow-[0_12px_40px_rgba(20,17,15,0.18)] max-h-[min(70dvh,calc(100dvh-5.5rem-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px)))] h-[min(560px,calc(100dvh-5.5rem-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px)))]"
+          className="pointer-events-auto fixed z-[60] box-border flex flex-col overflow-hidden rounded-2xl border border-rule bg-paper-elevated shadow-[0_12px_40px_rgba(20,17,15,0.18)] left-[max(1rem,env(safe-area-inset-left,0px))] right-[max(1rem,env(safe-area-inset-right,0px))] bottom-[calc(4.5rem+max(1rem,env(safe-area-inset-bottom,0px)))] ml-auto w-[min(calc(100vw-2rem),380px)] max-w-[calc(100vw-2rem)] h-[min(560px,calc(100dvh-5.5rem-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px)),calc(100svh-5.5rem-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px)))] max-h-[min(560px,calc(100dvh-5.5rem-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px)),calc(100svh-5.5rem-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px)))]"
         >
           <header className="flex shrink-0 items-center gap-3 border-b border-rule bg-fernent-red px-4 py-3 text-white">
             {/* Site favicon — same asset as layout metadata icons.icon */}
@@ -203,7 +216,7 @@ export function ChatWidget() {
               <div className="flex justify-start">
                 <div className="rounded-2xl border border-rule bg-paper-elevated px-3 py-2 text-sm text-muted">
                   <LoadingDots
-                    label="Recherche dans Ferñent"
+                    srLabel="Recherche dans Ferñent"
                     tone="red"
                     size="sm"
                   />
@@ -252,20 +265,6 @@ export function ChatWidget() {
           </form>
         </section>
       )}
-
-      <button
-        type="button"
-        className="pointer-events-auto ml-auto inline-flex h-14 shrink-0 items-center gap-2 rounded-full bg-fernent-red px-4 text-sm font-semibold text-white shadow-[0_8px_24px_rgba(225,6,0,0.35)] hover:bg-fernent-red-deep focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fernent-red"
-        aria-expanded={open}
-        aria-controls={open ? panelId : undefined}
-        onClick={() => setOpen((v) => !v)}
-      >
-        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>
-          <path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v7A2.5 2.5 0 0 1 17.5 16H9l-4 3.5V6.5Z" />
-          <path d="M8 9h8M8 12h5" />
-        </svg>
-        <span className="pr-1">{open ? "Fermer" : "Discuter"}</span>
-      </button>
-    </div>
+    </>
   );
 }

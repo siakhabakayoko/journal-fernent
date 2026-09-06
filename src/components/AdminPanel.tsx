@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import type {
   Article,
@@ -182,6 +182,8 @@ export function AdminPanel({
     "articles" | "issues" | "videos" | "moderation"
   >("articles");
   const [draft, setDraft] = useState<ArticleDraft | null>(null);
+  const draftRef = useRef<ArticleDraft | null>(null);
+  draftRef.current = draft;
   const [issueDraft, setIssueDraft] = useState<IssueDraft | null>(null);
   const [videoDraft, setVideoDraft] = useState<VideoDraft | null>(null);
   const [error, setError] = useState("");
@@ -279,14 +281,20 @@ export function AdminPanel({
 
   async function saveDraft(e: React.FormEvent) {
     e.preventDefault();
-    if (!draft) return;
+    const current = draftRef.current ?? draft;
+    if (!current) return;
     setPending(true);
     setError("");
     try {
+      // Always send latest draft (incl. AI cover URL set via functional updates).
+      const payload = {
+        ...current,
+        coverImage: (current.coverImage || "").trim(),
+      };
       const res = await fetch("/api/admin/articles", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(draft),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) {
         setError("Erreur d'enregistrement");
@@ -961,7 +969,7 @@ export function AdminPanel({
                 >
                   {pending ? (
                     <LoadingDots
-                      label="Enregistrement / audio"
+                      srLabel="Enregistrement en cours"
                       tone="white"
                       size="sm"
                     />
