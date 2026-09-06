@@ -101,6 +101,20 @@ export function NotreHistoire({ className = "" }: { className?: string }) {
             </figcaption>
           </figure>
         </div>
+        <figure className="mt-6 space-y-3">
+          <div className="relative aspect-[4/5] sm:aspect-[3/4] max-w-md mx-auto overflow-hidden border border-rule bg-paper-elevated">
+            <Image
+              src="/about/cofondateurs-2.jpg"
+              alt={h.cofoundersPosterAlt}
+              fill
+              className="object-contain bg-[#f5e84a]"
+              sizes="(max-width: 640px) 100vw, 448px"
+            />
+          </div>
+          <figcaption className="text-center text-sm text-muted">
+            {h.cofoundersPosterCaption}
+          </figcaption>
+        </figure>
         <p className="mt-4 text-sm sm:text-base leading-relaxed text-ink/90">
           {h.cofoundersLegacy}
         </p>

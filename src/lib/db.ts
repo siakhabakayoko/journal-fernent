@@ -257,8 +257,8 @@ export async function ensureSeeded(): Promise<void> {
         }
       }
 
-      const issueCount = await db.execute("SELECT COUNT(*) AS n FROM issues");
-      if (Number(issueCount.rows[0]?.n ?? 0) === 0) {
+      // Upsert monthly issues from seed so new PDFs (e.g. Avril 2026) land in Turso.
+      {
         const { default: issues } = await import("../../content/issues.json");
         for (const iss of issues as Array<{
           id: string;
@@ -272,9 +272,18 @@ export async function ensureSeeded(): Promise<void> {
           publishedAt: string;
         }>) {
           await db.execute({
-            sql: `INSERT OR IGNORE INTO issues
+            sql: `INSERT INTO issues
               (id, slug, title, month, year, description, pdf_url, cover_image, published_at)
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+              ON CONFLICT(id) DO UPDATE SET
+                slug = excluded.slug,
+                title = excluded.title,
+                month = excluded.month,
+                year = excluded.year,
+                description = excluded.description,
+                pdf_url = excluded.pdf_url,
+                cover_image = excluded.cover_image,
+                published_at = excluded.published_at`,
             args: [
               iss.id,
               iss.slug,

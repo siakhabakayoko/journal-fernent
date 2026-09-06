@@ -86,6 +86,10 @@ export const dictionaries = {
       cofounderRole: "Cofondateur de Ferñent",
       cofoundersLegacy:
         "Militants engagés dans les luttes pour la libération des peuples d'Afrique, ils ont posé les fondations de ce journal au service du mouvement ouvrier et populaire. Leur vision d'un journal militant, tribune des opprimés et instrument de conscientisation politique, guide encore aujourd'hui chaque édition de Ferñent.",
+      cofoundersPosterAlt:
+        "Affiche hommage — Assane Samb et Birane Gaye, cofondateurs de Ferñent",
+      cofoundersPosterCaption:
+        "Assane Samb & Birane Gaye — On ne les oublie pas.",
       teamTitle: "L'équipe actuelle",
       dfrInitials: "DFR",
       dfrName: "Diagne Fodé Roland",
@@ -320,6 +324,10 @@ export const dictionaries = {
       cofounderRole: "Ki door Ferñent",
       cofoundersLegacy:
         "Seen xeex ak seen vision mooy gindi tey jukki yu Ferñent.",
+      cofoundersPosterAlt:
+        "Nataal — Assane Samb ak Birane Gaye, ñi door Ferñent",
+      cofoundersPosterCaption:
+        "Assane Samb & Birane Gaye — Duñu leen fatte.",
       teamTitle: "Équipe bi tey",
       dfrInitials: "DFR",
       dfrName: "Diagne Fodé Roland",
