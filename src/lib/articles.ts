@@ -223,7 +223,8 @@ export async function upsertArticle(
       });
       return { article, mode: "turso" };
     } catch (err) {
-      console.error("[articles] Turso upsert failed, falling back", err);
+      console.error("[articles] Turso upsert failed", err);
+      throw err;
     }
   }
   const articles = await getArticles();
@@ -250,7 +251,8 @@ export async function deleteArticle(
         mode: "turso",
       };
     } catch (err) {
-      console.error("[articles] Turso delete failed, falling back", err);
+      console.error("[articles] Turso delete failed", err);
+      throw err;
     }
   }
   const articles = await getArticles();

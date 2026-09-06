@@ -47,7 +47,17 @@ export async function POST(request: Request) {
       body.publishedAt || `${year}-${String(month).padStart(2, "0")}-01`,
     ),
   };
-  const result = await upsertIssue(issue);
+  let result;
+  try {
+    result = await upsertIssue(issue);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("[admin/issues] persist failed", message);
+    return NextResponse.json(
+      { error: "persist_failed", message },
+      { status: 500 },
+    );
+  }
 
   if (isCreate) {
     void notifySubscribers({
@@ -70,7 +80,17 @@ export async function DELETE(request: Request) {
   const { searchParams } = new URL(request.url);
   const id = searchParams.get("id");
   if (!id) return NextResponse.json({ error: "invalid" }, { status: 400 });
-  const result = await deleteIssue(id);
+  let result;
+  try {
+    result = await deleteIssue(id);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("[admin/issues] delete persist failed", message);
+    return NextResponse.json(
+      { error: "persist_failed", message },
+      { status: 500 },
+    );
+  }
   if (!result.ok) return NextResponse.json({ error: "not_found" }, { status: 404 });
   return NextResponse.json(result);
 }

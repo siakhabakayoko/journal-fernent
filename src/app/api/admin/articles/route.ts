@@ -8,6 +8,7 @@ import {
   slugify,
   upsertArticle,
 } from "@/lib/articles";
+import { isTursoConfigured } from "@/lib/db";
 import { buildArticleListenText } from "@/lib/article-audio";
 import { synthesizeFrenchSpeech } from "@/lib/nvidia-tts";
 import type { Article, Rubric } from "@/lib/types";
@@ -64,7 +65,10 @@ export async function GET() {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
   const articles = await getArticles();
-  return NextResponse.json({ articles });
+  return NextResponse.json({
+    articles,
+    tursoConfigured: isTursoConfigured(),
+  });
 }
 
 export async function POST(request: Request) {
@@ -124,7 +128,18 @@ export async function POST(request: Request) {
     audioTextHash: canSkipAudio ? existing!.audioTextHash : existing?.audioTextHash,
   };
 
-  let result = await upsertArticle(article);
+  let result;
+  try {
+    result = await upsertArticle(article);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("[admin/articles] persist failed", message);
+    return NextResponse.json(
+      { error: "persist_failed", message },
+      { status: 500 },
+    );
+  }
+
   let audioGenerated = false;
   let audioSkipped = canSkipAudio;
   let audioError: string | undefined;
@@ -141,13 +156,22 @@ export async function POST(request: Request) {
       const url = await storeArticleAudio(tts.bytes, tts.mimeType, article.id);
       article.audioUrl = url;
       article.audioTextHash = textHash;
-      result = await upsertArticle(article);
-      audioGenerated = true;
-      console.info("[admin/articles] listen audio stored", {
-        id: article.id,
-        provider: tts.provider,
-        url,
-      });
+      try {
+        result = await upsertArticle(article);
+        audioGenerated = true;
+        console.info("[admin/articles] listen audio stored", {
+          id: article.id,
+          provider: tts.provider,
+          url,
+        });
+      } catch (err) {
+        // Article text already persisted; audio URL update failed.
+        audioError = err instanceof Error ? err.message : String(err);
+        console.error(
+          "[admin/articles] audio metadata persist failed after TTS",
+          audioError,
+        );
+      }
     } catch (err) {
       audioError = err instanceof Error ? err.message : String(err);
       console.warn(
@@ -183,7 +207,17 @@ export async function DELETE(request: Request) {
   const { searchParams } = new URL(request.url);
   const id = searchParams.get("id");
   if (!id) return NextResponse.json({ error: "invalid" }, { status: 400 });
-  const result = await deleteArticle(id);
+  let result;
+  try {
+    result = await deleteArticle(id);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("[admin/articles] delete persist failed", message);
+    return NextResponse.json(
+      { error: "persist_failed", message },
+      { status: 500 },
+    );
+  }
   if (!result.ok) return NextResponse.json({ error: "not_found" }, { status: 404 });
   return NextResponse.json(result);
 }

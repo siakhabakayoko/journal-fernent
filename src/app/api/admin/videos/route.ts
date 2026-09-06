@@ -46,7 +46,17 @@ export async function POST(request: Request) {
     })(),
     placeholder: body.placeholder,
   });
-  const result = await upsertVideo(video);
+  let result;
+  try {
+    result = await upsertVideo(video);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("[admin/videos] persist failed", message);
+    return NextResponse.json(
+      { error: "persist_failed", message },
+      { status: 500 },
+    );
+  }
 
   if (isCreate) {
     void notifySubscribers({
@@ -69,7 +79,17 @@ export async function DELETE(request: Request) {
   const { searchParams } = new URL(request.url);
   const id = searchParams.get("id");
   if (!id) return NextResponse.json({ error: "invalid" }, { status: 400 });
-  const result = await deleteVideo(id);
+  let result;
+  try {
+    result = await deleteVideo(id);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("[admin/videos] delete persist failed", message);
+    return NextResponse.json(
+      { error: "persist_failed", message },
+      { status: 500 },
+    );
+  }
   if (!result.ok) return NextResponse.json({ error: "not_found" }, { status: 404 });
   return NextResponse.json(result);
 }

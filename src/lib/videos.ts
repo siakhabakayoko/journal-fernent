@@ -243,7 +243,8 @@ export async function upsertVideo(
       });
       return { video: normalized, mode: "turso" };
     } catch (err) {
-      console.error("[videos] Turso upsert failed, falling back", err);
+      console.error("[videos] Turso upsert failed", err);
+      throw err;
     }
   }
   const videos = await getVideos();
@@ -270,7 +271,8 @@ export async function deleteVideo(
         mode: "turso",
       };
     } catch (err) {
-      console.error("[videos] Turso delete failed, falling back", err);
+      console.error("[videos] Turso delete failed", err);
+      throw err;
     }
   }
   const videos = await getVideos();

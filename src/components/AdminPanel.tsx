@@ -296,17 +296,29 @@ export function AdminPanel({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError("Erreur d'enregistrement");
+        setModeNote("");
+        setError(
+          typeof data.message === "string" && data.message
+            ? data.message
+            : typeof data.error === "string" && data.error
+              ? data.error
+              : "Erreur d'enregistrement",
+        );
         return;
       }
-      const data = await res.json();
+      if (data.mode === "memory") {
+        setModeNote("");
+        setError(
+          "Échec persistance : mode mémoire (Turso non disponible).",
+        );
+        return;
+      }
       const baseNote =
-        data.mode === "memory"
-          ? "Demo mode (mémoire) — persistance limitée sur Vercel."
-          : data.mode === "turso"
-            ? "Enregistré sur Turso."
-            : "Enregistré sur disque.";
+        data.mode === "turso"
+          ? "Enregistré sur Turso."
+          : "Enregistré sur disque.";
       const audioNote = data.audioGenerated
         ? " Audio généré."
         : data.audioSkipped
@@ -337,17 +349,29 @@ export function AdminPanel({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(issueDraft),
       });
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError("Erreur d'enregistrement");
+        setModeNote("");
+        setError(
+          typeof data.message === "string" && data.message
+            ? data.message
+            : typeof data.error === "string" && data.error
+              ? data.error
+              : "Erreur d'enregistrement",
+        );
         return;
       }
-      const data = await res.json();
+      if (data.mode === "memory") {
+        setModeNote("");
+        setError(
+          "Échec persistance : mode mémoire (Turso non disponible).",
+        );
+        return;
+      }
       setModeNote(
-        data.mode === "memory"
-          ? "Demo mode (mémoire)."
-          : data.mode === "turso"
-            ? "Enregistré sur Turso."
-            : "Enregistré sur disque.",
+        data.mode === "turso"
+          ? "Enregistré sur Turso."
+          : "Enregistré sur disque.",
       );
       setIssues((prev) => {
         const next = prev.filter((i) => i.id !== data.issue.id);
@@ -371,17 +395,29 @@ export function AdminPanel({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(videoDraft),
       });
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError("Erreur d'enregistrement");
+        setModeNote("");
+        setError(
+          typeof data.message === "string" && data.message
+            ? data.message
+            : typeof data.error === "string" && data.error
+              ? data.error
+              : "Erreur d'enregistrement",
+        );
         return;
       }
-      const data = await res.json();
+      if (data.mode === "memory") {
+        setModeNote("");
+        setError(
+          "Échec persistance : mode mémoire (Turso non disponible).",
+        );
+        return;
+      }
       setModeNote(
-        data.mode === "memory"
-          ? "Demo mode (mémoire)."
-          : data.mode === "turso"
-            ? "Enregistré sur Turso."
-            : "Enregistré sur disque.",
+        data.mode === "turso"
+          ? "Enregistré sur Turso."
+          : "Enregistré sur disque.",
       );
       setVideos((prev) => {
         const next = prev.filter((v) => v.id !== data.video.id);
@@ -401,13 +437,23 @@ export function AdminPanel({
       const res = await fetch(`/api/admin/articles?id=${encodeURIComponent(id)}`, {
         method: "DELETE",
       });
-      if (res.ok) {
-        const data = await res.json();
-        setArticles((prev) => prev.filter((a) => a.id !== id));
-        setModeNote(
-          data.mode === "memory" ? "Demo mode (mémoire)." : "Supprimé.",
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(
+          typeof data.message === "string" && data.message
+            ? data.message
+            : "Échec de la suppression",
         );
+        return;
       }
+      if (data.mode === "memory") {
+        setError(
+          "Échec persistance : mode mémoire (Turso non disponible).",
+        );
+        return;
+      }
+      setArticles((prev) => prev.filter((a) => a.id !== id));
+      setModeNote("Supprimé.");
     } finally {
       setPending(false);
     }

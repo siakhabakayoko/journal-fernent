@@ -162,7 +162,8 @@ export async function upsertIssue(
       });
       return { issue, mode: "turso" };
     } catch (err) {
-      console.error("[issues] Turso upsert failed, falling back", err);
+      console.error("[issues] Turso upsert failed", err);
+      throw err;
     }
   }
   const issues = await getIssues();
@@ -189,7 +190,8 @@ export async function deleteIssue(
         mode: "turso",
       };
     } catch (err) {
-      console.error("[issues] Turso delete failed, falling back", err);
+      console.error("[issues] Turso delete failed", err);
+      throw err;
     }
   }
   const issues = await getIssues();
