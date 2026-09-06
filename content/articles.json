@@ -10,7 +10,7 @@
     "publishedAt": "2026-03-31",
     "featured": true,
     "commentsEnabled": true,
-    "coverImage": "/covers/photos/a4-marche.jpg"
+    "coverImage": "/covers/articles/ai-agriculture.png"
   },
   {
     "id": "article-test-youtube",
@@ -23,7 +23,7 @@
     "publishedAt": "2026-03-31",
     "featured": true,
     "commentsEnabled": true,
-    "coverImage": "/covers/photos/a4-marche.jpg"
+    "coverImage": "/covers/articles/ai-emploi.png"
   },
   {
     "id": "article-1",
@@ -36,7 +36,7 @@
     "publishedAt": "2026-02-01",
     "featured": true,
     "commentsEnabled": true,
-    "coverImage": "/covers/photos/a4-marche.jpg"
+    "coverImage": "/covers/articles/cc-assemblee.jpg"
   },
   {
     "id": "article-2",
@@ -49,7 +49,7 @@
     "publishedAt": "2026-02-03",
     "featured": false,
     "commentsEnabled": true,
-    "coverImage": "/covers/photos/a1-dette.jpg"
+    "coverImage": "/covers/articles/ai-cfa.png"
   },
   {
     "id": "article-special-avril-2026",
@@ -62,7 +62,7 @@
     "publishedAt": "2026-04-06",
     "featured": true,
     "commentsEnabled": true,
-    "coverImage": "/covers/photos/a4-marche.jpg"
+    "coverImage": "/covers/articles/ai-palace.png"
   },
   {
     "id": "avril-2026-gouvernance",
@@ -75,7 +75,7 @@
     "publishedAt": "2026-04-06",
     "featured": true,
     "commentsEnabled": true,
-    "coverImage": "/covers/migrated/photo-1590845947670-c009801ffa74.jpg"
+    "coverImage": "/covers/articles/cc-assemblee2.jpg"
   },
   {
     "id": "avril-2026-refondation",
@@ -88,7 +88,7 @@
     "publishedAt": "2026-04-06",
     "featured": false,
     "commentsEnabled": true,
-    "coverImage": "/covers/migrated/photo-1529107386315-e1a2ed48a620.jpg"
+    "coverImage": "/covers/articles/ai-institutions.png"
   },
   {
     "id": "avril-2026-casamance",
@@ -101,7 +101,7 @@
     "publishedAt": "2026-04-06",
     "featured": false,
     "commentsEnabled": true,
-    "coverImage": "/covers/migrated/photo-1489749798305-4fea3ae63d43.jpg"
+    "coverImage": "/covers/articles/ai-casamance.png"
   },
   {
     "id": "avril-2026-federation-mali",
@@ -114,7 +114,7 @@
     "publishedAt": "2026-04-06",
     "featured": true,
     "commentsEnabled": true,
-    "coverImage": "/covers/migrated/photo-1516026672322-bc52d61a55d5.jpg"
+    "coverImage": "/covers/articles/ai-bamako.png"
   },
   {
     "id": "avril-2026-pcb-terrorisme",
@@ -127,7 +127,7 @@
     "publishedAt": "2026-04-06",
     "featured": false,
     "commentsEnabled": true,
-    "coverImage": "/covers/migrated/photo-1591696205602-2f950c417cb9.jpg"
+    "coverImage": "/covers/articles/ai-benin.png"
   },
   {
     "id": "avril-2026-solidarite-pcb",
@@ -140,7 +140,7 @@
     "publishedAt": "2026-04-06",
     "featured": false,
     "commentsEnabled": true,
-    "coverImage": "/covers/migrated/photo-1509099836639-18ba1795216d.jpg"
+    "coverImage": "/covers/articles/cc-porto-novo.jpg"
   },
   {
     "id": "avril-2026-aes-banque",
@@ -153,7 +153,7 @@
     "publishedAt": "2026-04-06",
     "featured": true,
     "commentsEnabled": true,
-    "coverImage": "/covers/migrated/photo-1526304640581-d334cdbbf45e.jpg"
+    "coverImage": "/covers/articles/ai-aes.png"
   },
   {
     "id": "avril-2026-france-antifasciste",
@@ -166,7 +166,7 @@
     "publishedAt": "2026-04-06",
     "featured": false,
     "commentsEnabled": true,
-    "coverImage": "/covers/migrated/photo-1549924231-f129b911e442.jpg"
+    "coverImage": "/covers/articles/ai-paris.png"
   },
   {
     "id": "avril-2026-iran-venezuela",
@@ -179,7 +179,7 @@
     "publishedAt": "2026-04-06",
     "featured": true,
     "commentsEnabled": true,
-    "coverImage": "/covers/migrated/photo-1580130775562-0ef92da028de.jpg"
+    "coverImage": "/covers/articles/ai-tehran.png"
   },
   {
     "id": "avril-2026-reparations-haiti",
@@ -192,7 +192,7 @@
     "publishedAt": "2026-04-06",
     "featured": false,
     "commentsEnabled": true,
-    "coverImage": "/covers/migrated/photo-1568454537842-d933259bb258.jpg"
+    "coverImage": "/covers/articles/ai-haiti.png"
   },
   {
     "id": "avril-2026-staline-davis",
@@ -205,7 +205,7 @@
     "publishedAt": "2026-04-06",
     "featured": false,
     "commentsEnabled": true,
-    "coverImage": "/covers/migrated/photo-1547981609-4b6bfe67ca0b.jpg"
+    "coverImage": "/covers/articles/ai-archives.png"
   },
   {
     "id": "article-3",
@@ -218,7 +218,7 @@
     "publishedAt": "2026-02-05",
     "featured": true,
     "commentsEnabled": true,
-    "coverImage": "/covers/photos/a4-marche.jpg"
+    "coverImage": "/covers/articles/ai-terres.png"
   },
   {
     "id": "article-4",
@@ -231,7 +231,7 @@
     "publishedAt": "2026-02-07",
     "featured": false,
     "commentsEnabled": true,
-    "coverImage": "/covers/photos/a4-marche.jpg"
+    "coverImage": "/covers/articles/cc-independance.jpg"
   },
   {
     "id": "article-5",
@@ -244,7 +244,7 @@
     "publishedAt": "2026-02-10",
     "featured": false,
     "commentsEnabled": true,
-    "coverImage": "/covers/photos/a4-marche.jpg"
+    "coverImage": "/covers/articles/cc-nation.jpg"
   },
   {
     "id": "article-6",
@@ -257,7 +257,7 @@
     "publishedAt": "2026-02-12",
     "featured": false,
     "commentsEnabled": true,
-    "coverImage": "/covers/photos/a4-marche.jpg"
+    "coverImage": "/covers/articles/cc-casamance.jpg"
   },
   {
     "id": "article-7",
@@ -270,7 +270,7 @@
     "publishedAt": "2026-01-28",
     "featured": true,
     "commentsEnabled": true,
-    "coverImage": "/covers/photos/a5-sahel.png"
+    "coverImage": "/covers/articles/cc-bamako.jpg"
   },
   {
     "id": "article-8",
@@ -283,7 +283,7 @@
     "publishedAt": "2026-01-25",
     "featured": false,
     "commentsEnabled": true,
-    "coverImage": "/covers/photos/a5-sahel.png"
+    "coverImage": "/covers/articles/cc-niger.jpg"
   },
   {
     "id": "article-9",
@@ -296,7 +296,7 @@
     "publishedAt": "2026-01-20",
     "featured": false,
     "commentsEnabled": true,
-    "coverImage": "/covers/photos/a5-sahel.png"
+    "coverImage": "/covers/articles/ai-abidjan.png"
   },
   {
     "id": "article-10",
@@ -309,7 +309,7 @@
     "publishedAt": "2026-01-15",
     "featured": true,
     "commentsEnabled": true,
-    "coverImage": "/covers/photos/a1-dette.jpg"
+    "coverImage": "/covers/articles/cc-demdikk.jpg"
   },
   {
     "id": "article-11",
@@ -322,7 +322,7 @@
     "publishedAt": "2026-02-15",
     "featured": false,
     "commentsEnabled": true,
-    "coverImage": "/covers/photos/a10-palestine.png"
+    "coverImage": "/covers/articles/ai-caracas.png"
   },
   {
     "id": "article-12",
@@ -335,6 +335,6 @@
     "publishedAt": "2026-02-18",
     "featured": false,
     "commentsEnabled": true,
-    "coverImage": "/covers/photos/a10-palestine.png"
+    "coverImage": "/covers/articles/cc-tehran.jpg"
   }
 ]
