@@ -255,16 +255,10 @@ export function ChatWidget() {
         aria-controls={open ? panelId : undefined}
         onClick={() => setOpen((v) => !v)}
       >
-        <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white" aria-hidden>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/icons/icon-192.png"
-            alt=""
-            width={22}
-            height={22}
-            className="h-[22px] w-[22px] object-contain"
-          />
-        </span>
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>
+          <path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v7A2.5 2.5 0 0 1 17.5 16H9l-4 3.5V6.5Z" />
+          <path d="M8 9h8M8 12h5" />
+        </svg>
         <span className="pr-1">{open ? "Fermer" : "Discuter"}</span>
       </button>
 
