@@ -1,12 +1,15 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { buildArticleListenText } from "@/lib/article-audio";
 import { useLanguage } from "@/lib/i18n/LanguageProvider";
 
 type Props = {
   title: string;
   excerpt: string;
   body: string;
+  /** Pre-generated public audio URL — skips /api/tts when present. */
+  audioUrl?: string;
 };
 
 type SpeakState = "idle" | "loading" | "speaking" | "paused" | "error";
@@ -14,13 +17,6 @@ type SpeakState = "idle" | "loading" | "speaking" | "paused" | "error";
 /** Tiny silent WAV (~0.05s) — unlocks HTMLAudioElement within a user gesture. */
 const SILENT_WAV =
   "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=";
-
-function buildPlainText(title: string, excerpt: string, body: string): string {
-  const paragraphs = body.split(/\n\n+/).map((p) => p.trim()).filter(Boolean);
-  return [title.trim(), excerpt.trim(), ...paragraphs]
-    .filter(Boolean)
-    .join("\n\n");
-}
 
 function isNotAllowedError(err: unknown): boolean {
   if (err instanceof DOMException && err.name === "NotAllowedError") return true;
@@ -39,7 +35,12 @@ function isNotAllowedError(err: unknown): boolean {
 const btnClass =
   "inline-flex items-center gap-1.5 rounded-sm border border-rule-strong bg-paper-elevated px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-ink transition hover:border-fernent-red hover:text-fernent-red disabled:cursor-not-allowed disabled:opacity-50";
 
-export function ArticleListenButton({ title, excerpt, body }: Props) {
+export function ArticleListenButton({
+  title,
+  excerpt,
+  body,
+  audioUrl,
+}: Props) {
   const { t } = useLanguage();
   const [state, setState] = useState<SpeakState>("idle");
   const [errorMsg, setErrorMsg] = useState("");
@@ -137,15 +138,50 @@ export function ArticleListenButton({ title, excerpt, body }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Reset when article content changes
+  // Reset when article content / stored audio changes
   useEffect(() => {
     cleanupPlayback();
     setState("idle");
     setErrorMsg("");
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [title, excerpt, body]);
+  }, [title, excerpt, body, audioUrl]);
 
-  async function start() {
+  async function playFromUrl(url: string): Promise<void> {
+    const audio = audioRef.current;
+    if (!audio) {
+      throw new Error(t.article.unsupported || t.article.listenError);
+    }
+
+    audio.src = url;
+    audio.load();
+
+    audio.onended = () => {
+      setState("idle");
+    };
+    audio.onerror = () => {
+      setState("error");
+      setErrorMsg(t.article.listenError);
+    };
+
+    await audio.play();
+    setState("speaking");
+  }
+
+  async function startFromStoredUrl(storedUrl: string) {
+    cleanupPlayback();
+    setErrorMsg("");
+    setState("loading");
+    await unlockAudioPlayback();
+
+    try {
+      await playFromUrl(storedUrl);
+    } catch (err) {
+      setState("error");
+      setErrorMsg(mapErrorMessage(err));
+    }
+  }
+
+  async function startFromTts() {
     cleanupPlayback();
     setErrorMsg("");
     setState("loading");
@@ -155,7 +191,7 @@ export function ArticleListenButton({ title, excerpt, body }: Props) {
 
     const controller = new AbortController();
     abortRef.current = controller;
-    const text = buildPlainText(title, excerpt, body);
+    const text = buildArticleListenText(title, excerpt, body);
 
     try {
       const res = await fetch("/api/tts", {
@@ -186,26 +222,7 @@ export function ArticleListenButton({ title, excerpt, body }: Props) {
 
       const url = URL.createObjectURL(blob);
       objectUrlRef.current = url;
-
-      const audio = audioRef.current;
-      if (!audio) {
-        throw new Error(t.article.unsupported || t.article.listenError);
-      }
-
-      audio.src = url;
-      audio.load();
-
-      audio.onended = () => {
-        setState("idle");
-      };
-      audio.onerror = () => {
-        setState("error");
-        setErrorMsg(t.article.listenError);
-      };
-
-      // Same unlocked element — gesture already consumed via silent play.
-      await audio.play();
-      setState("speaking");
+      await playFromUrl(url);
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") {
         setState("idle");
@@ -214,6 +231,15 @@ export function ArticleListenButton({ title, excerpt, body }: Props) {
       setState("error");
       setErrorMsg(mapErrorMessage(err));
     }
+  }
+
+  async function start() {
+    const stored = audioUrl?.trim();
+    if (stored) {
+      await startFromStoredUrl(stored);
+      return;
+    }
+    await startFromTts();
   }
 
   function pause() {

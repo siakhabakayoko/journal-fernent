@@ -61,6 +61,7 @@ export function ArticleChrome({ article }: { article: Article }) {
             title={article.title}
             excerpt={article.excerpt}
             body={article.body}
+            audioUrl={article.audioUrl}
           />
           <span>Ferñent</span>
           <span className="text-rule-strong">·</span>

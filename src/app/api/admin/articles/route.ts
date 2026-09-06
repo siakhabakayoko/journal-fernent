@@ -1,4 +1,6 @@
+import { createHash } from "crypto";
 import { NextResponse } from "next/server";
+import { put } from "@vercel/blob";
 import { isAdminAuthenticated } from "@/lib/auth";
 import {
   deleteArticle,
@@ -6,8 +8,14 @@ import {
   slugify,
   upsertArticle,
 } from "@/lib/articles";
+import { buildArticleListenText } from "@/lib/article-audio";
+import { synthesizeFrenchSpeech } from "@/lib/nvidia-tts";
 import type { Article, Rubric } from "@/lib/types";
 import { notifySubscribers } from "@/lib/notify-subscribers";
+
+export const runtime = "nodejs";
+/** Magpie chunked TTS + Blob upload can exceed the default serverless limit. */
+export const maxDuration = 120;
 
 const RUBRICS: Rubric[] = [
   "senegal",
@@ -17,6 +25,39 @@ const RUBRICS: Rubric[] = [
   "social",
   "notre-journal",
 ];
+
+function hashAudioText(text: string): string {
+  return createHash("sha256").update(text, "utf8").digest("hex");
+}
+
+function audioExtForMime(mimeType: string): "mp3" | "wav" {
+  const m = mimeType.toLowerCase();
+  if (m.includes("mpeg") || m.includes("mp3")) return "mp3";
+  return "wav";
+}
+
+async function storeArticleAudio(
+  bytes: Buffer,
+  mimeType: string,
+  articleId: string,
+): Promise<string> {
+  const yyyy = String(new Date().getUTCFullYear());
+  const ext = audioExtForMime(mimeType);
+  const relativeKey = `audio/articles/${yyyy}/${articleId}.${ext}`;
+  const blobToken = process.env.BLOB_READ_WRITE_TOKEN?.trim();
+  if (!blobToken) {
+    throw new Error(
+      "BLOB_READ_WRITE_TOKEN manquant — impossible d'enregistrer l'audio.",
+    );
+  }
+  const result = await put(relativeKey, bytes, {
+    access: "public",
+    token: blobToken,
+    contentType: mimeType,
+    allowOverwrite: true,
+  });
+  return result.url;
+}
 
 export async function GET() {
   if (!(await isAdminAuthenticated())) {
@@ -44,23 +85,68 @@ export async function POST(request: Request) {
   const existing = (await getArticles()).find((a) => a.id === id);
   const isCreate = !existing;
 
+  const title = body.title.trim();
+  const excerpt = String(body.excerpt || "").trim();
+  const articleBody = String(body.body || "").trim();
+  const plainText = buildArticleListenText(title, excerpt, articleBody);
+  const textHash = plainText ? hashAudioText(plainText) : "";
+  const canSkipAudio =
+    Boolean(existing?.audioUrl) &&
+    Boolean(existing?.audioTextHash) &&
+    existing!.audioTextHash === textHash &&
+    Boolean(plainText);
+
   const article: Article = {
     id,
     slug:
       typeof body.slug === "string" && body.slug.trim()
         ? slugify(body.slug)
         : slugify(body.title),
-    title: body.title.trim(),
-    excerpt: String(body.excerpt || "").trim(),
-    body: String(body.body || "").trim(),
+    title,
+    excerpt,
+    body: articleBody,
     rubric,
     author: String(body.author || "Rédaction Ferñent").trim(),
     publishedAt: String(body.publishedAt || new Date().toISOString().slice(0, 10)),
     featured: Boolean(body.featured),
     commentsEnabled: body.commentsEnabled !== false,
     coverImage,
+    audioUrl: canSkipAudio ? existing!.audioUrl : undefined,
+    audioTextHash: canSkipAudio ? existing!.audioTextHash : undefined,
   };
-  const result = await upsertArticle(article);
+
+  let result = await upsertArticle(article);
+  let audioGenerated = false;
+  let audioSkipped = canSkipAudio;
+  let audioError: string | undefined;
+
+  if (!canSkipAudio && plainText) {
+    try {
+      console.info("[admin/articles] generating listen audio", {
+        id: article.id,
+        chars: plainText.length,
+      });
+      const tts = await synthesizeFrenchSpeech(plainText, {
+        signal: request.signal,
+      });
+      const url = await storeArticleAudio(tts.bytes, tts.mimeType, article.id);
+      article.audioUrl = url;
+      article.audioTextHash = textHash;
+      result = await upsertArticle(article);
+      audioGenerated = true;
+      console.info("[admin/articles] listen audio stored", {
+        id: article.id,
+        provider: tts.provider,
+        url,
+      });
+    } catch (err) {
+      audioError = err instanceof Error ? err.message : String(err);
+      console.warn(
+        "[admin/articles] listen audio generation failed — article saved without audioUrl; listen will fall back to /api/tts",
+        audioError,
+      );
+    }
+  }
 
   if (isCreate) {
     void notifySubscribers({
@@ -73,7 +159,12 @@ export async function POST(request: Request) {
     );
   }
 
-  return NextResponse.json(result);
+  return NextResponse.json({
+    ...result,
+    audioGenerated,
+    audioSkipped,
+    ...(audioError ? { audioError } : {}),
+  });
 }
 
 export async function DELETE(request: Request) {

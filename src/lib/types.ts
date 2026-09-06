@@ -19,6 +19,10 @@ export type Article = {
   commentsEnabled: boolean;
   /** Optional cover image URL or local path (e.g. /covers/… or /uploads/…). */
   coverImage?: string;
+  /** Public URL of pre-generated listen audio (Vercel Blob). */
+  audioUrl?: string;
+  /** SHA-256 of the plain text used to generate audioUrl (skip regen when unchanged). */
+  audioTextHash?: string;
 };
 
 export type MonthlyIssue = {

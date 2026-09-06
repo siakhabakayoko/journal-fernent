@@ -20,6 +20,12 @@ function cloneSeed(): Article[] {
   return JSON.parse(JSON.stringify(seed)) as Article[];
 }
 
+function optionalString(value: unknown): string | undefined {
+  if (value === undefined || value === null) return undefined;
+  const s = String(value).trim();
+  return s || undefined;
+}
+
 function rowToArticle(row: Record<string, unknown>): Article {
   const cover =
     row.cover_image ?? row.coverImage ?? undefined;
@@ -38,11 +44,13 @@ function rowToArticle(row: Record<string, unknown>): Article {
       cover !== undefined && cover !== null && String(cover).trim()
         ? String(cover)
         : undefined,
+    audioUrl: optionalString(row.audio_url ?? row.audioUrl),
+    audioTextHash: optionalString(row.audio_text_hash ?? row.audioTextHash),
   };
 }
 
 const ARTICLE_SELECT =
-  "id, slug, title, excerpt, body, rubric, author, published_at, featured, comments_enabled, cover_image";
+  "id, slug, title, excerpt, body, rubric, author, published_at, featured, comments_enabled, cover_image, audio_url, audio_text_hash";
 
 async function readFromDisk(): Promise<Article[] | null> {
   try {
@@ -85,8 +93,8 @@ async function persist(
     for (const a of articles) {
       await db.execute({
         sql: `INSERT INTO articles
-          (id, slug, title, excerpt, body, rubric, author, published_at, featured, comments_enabled, cover_image)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          (id, slug, title, excerpt, body, rubric, author, published_at, featured, comments_enabled, cover_image, audio_url, audio_text_hash)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           ON CONFLICT(id) DO UPDATE SET
             slug=excluded.slug,
             title=excluded.title,
@@ -97,7 +105,9 @@ async function persist(
             published_at=excluded.published_at,
             featured=excluded.featured,
             comments_enabled=excluded.comments_enabled,
-            cover_image=excluded.cover_image`,
+            cover_image=excluded.cover_image,
+            audio_url=excluded.audio_url,
+            audio_text_hash=excluded.audio_text_hash`,
         args: [
           a.id,
           a.slug,
@@ -110,6 +120,8 @@ async function persist(
           a.featured ? 1 : 0,
           a.commentsEnabled ? 1 : 0,
           a.coverImage ?? null,
+          a.audioUrl ?? null,
+          a.audioTextHash ?? null,
         ],
       });
     }
@@ -178,8 +190,8 @@ export async function upsertArticle(
       const db = getTursoClient();
       await db.execute({
         sql: `INSERT INTO articles
-          (id, slug, title, excerpt, body, rubric, author, published_at, featured, comments_enabled, cover_image)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          (id, slug, title, excerpt, body, rubric, author, published_at, featured, comments_enabled, cover_image, audio_url, audio_text_hash)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           ON CONFLICT(id) DO UPDATE SET
             slug=excluded.slug,
             title=excluded.title,
@@ -190,7 +202,9 @@ export async function upsertArticle(
             published_at=excluded.published_at,
             featured=excluded.featured,
             comments_enabled=excluded.comments_enabled,
-            cover_image=excluded.cover_image`,
+            cover_image=excluded.cover_image,
+            audio_url=excluded.audio_url,
+            audio_text_hash=excluded.audio_text_hash`,
         args: [
           article.id,
           article.slug,
@@ -203,6 +217,8 @@ export async function upsertArticle(
           article.featured ? 1 : 0,
           article.commentsEnabled ? 1 : 0,
           article.coverImage ?? null,
+          article.audioUrl ?? null,
+          article.audioTextHash ?? null,
         ],
       });
       return { article, mode: "turso" };

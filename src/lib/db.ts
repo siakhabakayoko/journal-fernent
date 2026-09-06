@@ -36,7 +36,9 @@ CREATE TABLE IF NOT EXISTS articles (
   published_at TEXT NOT NULL,
   featured INTEGER NOT NULL DEFAULT 0,
   comments_enabled INTEGER NOT NULL DEFAULT 1,
-  cover_image TEXT
+  cover_image TEXT,
+  audio_url TEXT,
+  audio_text_hash TEXT
 );
 
 CREATE TABLE IF NOT EXISTS comments (
@@ -113,6 +115,16 @@ async function migrateColumns(db: Client): Promise<void> {
     /* column may already exist */
   }
   try {
+    await db.execute("ALTER TABLE articles ADD COLUMN audio_url TEXT");
+  } catch {
+    /* column may already exist */
+  }
+  try {
+    await db.execute("ALTER TABLE articles ADD COLUMN audio_text_hash TEXT");
+  } catch {
+    /* column may already exist */
+  }
+  try {
     await db.execute("ALTER TABLE comments ADD COLUMN hidden INTEGER NOT NULL DEFAULT 0");
   } catch {
     /* column may already exist */
@@ -166,6 +178,8 @@ export async function ensureSeeded(): Promise<void> {
         featured: boolean;
         commentsEnabled: boolean;
         coverImage?: string;
+        audioUrl?: string;
+        audioTextHash?: string;
       };
       const seedArticles = articles as SeedArticle[];
       const seedIds = new Set(seedArticles.map((a) => a.id));
@@ -173,8 +187,8 @@ export async function ensureSeeded(): Promise<void> {
       for (const a of seedArticles) {
         await db.execute({
           sql: `INSERT INTO articles
-            (id, slug, title, excerpt, body, rubric, author, published_at, featured, comments_enabled, cover_image)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            (id, slug, title, excerpt, body, rubric, author, published_at, featured, comments_enabled, cover_image, audio_url, audio_text_hash)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(id) DO UPDATE SET
               slug = excluded.slug,
               title = excluded.title,
@@ -185,7 +199,9 @@ export async function ensureSeeded(): Promise<void> {
               published_at = excluded.published_at,
               featured = excluded.featured,
               comments_enabled = excluded.comments_enabled,
-              cover_image = excluded.cover_image`,
+              cover_image = excluded.cover_image,
+              audio_url = COALESCE(excluded.audio_url, articles.audio_url),
+              audio_text_hash = COALESCE(excluded.audio_text_hash, articles.audio_text_hash)`,
           args: [
             a.id,
             a.slug,
@@ -198,6 +214,8 @@ export async function ensureSeeded(): Promise<void> {
             a.featured ? 1 : 0,
             a.commentsEnabled !== false ? 1 : 0,
             a.coverImage ?? null,
+            a.audioUrl ?? null,
+            a.audioTextHash ?? null,
           ],
         });
       }

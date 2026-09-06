@@ -35,6 +35,8 @@ type ArticleDraft = {
   featured: boolean;
   commentsEnabled: boolean;
   coverImage: string;
+  /** Read-only: existing pre-generated listen audio URL. */
+  audioUrl?: string;
 };
 
 type IssueDraft = {
@@ -107,6 +109,7 @@ const emptyArticleDraft = (): ArticleDraft => ({
   featured: false,
   commentsEnabled: true,
   coverImage: "",
+  audioUrl: "",
 });
 
 const emptyIssueDraft = (): IssueDraft => {
@@ -289,13 +292,20 @@ export function AdminPanel({
         return;
       }
       const data = await res.json();
-      setModeNote(
+      const baseNote =
         data.mode === "memory"
           ? "Demo mode (mémoire) — persistance limitée sur Vercel."
           : data.mode === "turso"
             ? "Enregistré sur Turso."
-            : "Enregistré sur disque.",
-      );
+            : "Enregistré sur disque.";
+      const audioNote = data.audioGenerated
+        ? " Audio généré."
+        : data.audioSkipped
+          ? " Audio inchangé."
+          : data.audioError
+            ? " Audio non généré (repli à la demande)."
+            : "";
+      setModeNote(baseNote + audioNote);
       setArticles((prev) => {
         const next = prev.filter((a) => a.id !== data.article.id);
         next.unshift(data.article);
@@ -910,6 +920,25 @@ export function AdminPanel({
                 )}
               </div>
 
+              <div className="rounded-sm border border-rule bg-paper px-3 py-2 text-xs text-muted">
+                {draft.audioUrl ? (
+                  <p>
+                    <span className="font-bold text-ink">Audio prêt</span>
+                    {" — "}
+                    l’écoute utilisera le fichier pré-généré. Une modification
+                    du titre, de l’extrait ou du corps régénère l’audio à
+                    l’enregistrement.
+                  </p>
+                ) : (
+                  <p>
+                    <span className="font-bold text-ink">Audio</span>
+                    {" — "}
+                    sera généré automatiquement à l’enregistrement (peut
+                    prendre jusqu’à 1–2 min).
+                  </p>
+                )}
+              </div>
+
               {error && <p className="text-sm text-red-700">{error}</p>}
               <div className="flex gap-2">
                 <button
@@ -917,7 +946,7 @@ export function AdminPanel({
                   disabled={pending}
                   className="bg-fernent-red px-4 py-2.5 text-sm font-bold uppercase tracking-wider text-white hover:bg-fernent-red-deep disabled:opacity-60 transition-colors"
                 >
-                  {t.admin.save}
+                  {pending ? "Enregistrement / audio…" : t.admin.save}
                 </button>
                 <button
                   type="button"
@@ -960,6 +989,7 @@ export function AdminPanel({
                         <div className="font-semibold">{a.title}</div>
                         <div className="text-xs text-neutral-500">
                           {a.publishedAt} · {t.nav[a.rubric]} · /article/{a.slug}
+                          {a.audioUrl ? " · Audio prêt" : ""}
                         </div>
                       </div>
                     </div>
@@ -980,6 +1010,7 @@ export function AdminPanel({
                             featured: a.featured,
                             commentsEnabled: a.commentsEnabled,
                             coverImage: a.coverImage || "",
+                            audioUrl: a.audioUrl || "",
                           })
                         }
                       >
