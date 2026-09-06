@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Article } from "@/lib/types";
 import { useLanguage } from "@/lib/i18n/LanguageProvider";
+import { ArticleListenButton } from "@/components/ArticleListenButton";
 
 export function ArticleChrome({ article }: { article: Article }) {
   const { t, locale } = useLanguage();
@@ -55,7 +56,12 @@ export function ArticleChrome({ article }: { article: Article }) {
           <span className="font-bold">{t.home.by} </span>
           {article.author}
         </p>
-        <div className="flex items-center gap-3 text-xs text-muted uppercase tracking-wider">
+        <div className="flex flex-wrap items-center gap-3 text-xs text-muted uppercase tracking-wider">
+          <ArticleListenButton
+            title={article.title}
+            excerpt={article.excerpt}
+            body={article.body}
+          />
           <span>Ferñent</span>
           <span className="text-rule-strong">·</span>
           <span>Lecture</span>

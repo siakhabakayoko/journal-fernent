@@ -109,6 +109,11 @@ export const dictionaries = {
       publish: "Publier",
       noComments: "Aucun commentaire pour le moment.",
       back: "Retour",
+      listen: "Écouter l'article",
+      pause: "Pause",
+      resume: "Reprendre",
+      stop: "Arrêter",
+      unsupported: "Lecture audio non disponible sur cet appareil.",
     },
     contact: {
       title: "Contact",
@@ -346,6 +351,11 @@ export const dictionaries = {
       publish: "Yónnee",
       noComments: "Amul kàddu mukk.",
       back: "Dellu",
+      listen: "Déglu jukki bi",
+      pause: "Taxaw",
+      resume: "Dellu ci",
+      stop: "Daañ",
+      unsupported: "Déglu audio amul ci aparel bii.",
     },
     contact: {
       title: "Jokkalante",
