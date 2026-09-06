@@ -1,8 +1,58 @@
 "use client";
 
+import type { SVGProps } from "react";
 import Image from "next/image";
 import { CONTACT_EMAIL } from "@/lib/types";
 import { useLanguage } from "@/lib/i18n/LanguageProvider";
+
+const PRINCIPLE_ICONS = [
+  // Mouvement ouvrier et populaire — raised fist / workers
+  (props: SVGProps<SVGSVGElement>) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}>
+      <path d="M9 11V5.5a1.5 1.5 0 0 1 3 0V11" />
+      <path d="M12 11V4.5a1.5 1.5 0 0 1 3 0V11" />
+      <path d="M15 11V6.5a1.5 1.5 0 0 1 3 0V14a5 5 0 0 1-5 5h-1.5a5.5 5.5 0 0 1-5.3-4.1L5 11.5a1.5 1.5 0 0 1 2.7-1.3L9 13" />
+      <path d="M6 11V9.5a1.5 1.5 0 0 1 3 0V11" />
+    </svg>
+  ),
+  // Libération nationale — broken chain
+  (props: SVGProps<SVGSVGElement>) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}>
+      <path d="M8.5 14.5 6 17a3.5 3.5 0 0 1-5-5l2.5-2.5" />
+      <path d="M15.5 9.5 18 7a3.5 3.5 0 0 1 5 5l-2.5 2.5" />
+      <path d="M9 11.5 7.5 13" />
+      <path d="M16.5 11 15 12.5" />
+      <path d="M11 9.5 10 8" />
+      <path d="M14 14.5 13 13" />
+    </svg>
+  ),
+  // Émancipation des femmes — women / solidarity (Venus-inspired group)
+  (props: SVGProps<SVGSVGElement>) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}>
+      <circle cx="9" cy="7" r="2.25" />
+      <circle cx="15.5" cy="7.5" r="2" />
+      <path d="M9 9.25v5.5" />
+      <path d="M6.5 12.5h5" />
+      <path d="M9 14.75 6.75 19" />
+      <path d="M9 14.75 11.25 19" />
+      <path d="M15.5 9.5v4.25" />
+      <path d="M13.5 12.25h4" />
+      <path d="M15.5 13.75 13.75 17.5" />
+      <path d="M15.5 13.75 17.25 17.5" />
+    </svg>
+  ),
+  // Solidarité internationaliste — globe + handshake motif
+  (props: SVGProps<SVGSVGElement>) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M3 12h18" />
+      <path d="M12 3a14 14 0 0 1 0 18" />
+      <path d="M12 3a14 14 0 0 0 0 18" />
+      <path d="M7.5 14.5c1 .8 2.2 1.3 3.5 1.3s2.5-.5 3.5-1.3" />
+      <path d="M8 16.5h8" />
+    </svg>
+  ),
+] as const;
 
 export function NotreHistoire({ className = "" }: { className?: string }) {
   const { t } = useLanguage();
@@ -45,17 +95,23 @@ export function NotreHistoire({ className = "" }: { className?: string }) {
           {h.principlesTitle}
         </h4>
         <ul className="mt-4 grid gap-4 sm:grid-cols-2">
-          {h.principles.map((card) => (
-            <li
-              key={card.title}
-              className="border border-rule bg-paper p-4 sm:p-5"
-            >
-              <p className="font-serif font-bold text-ink">{card.title}</p>
-              <p className="mt-2 text-sm leading-relaxed text-ink/85">
-                {card.body}
-              </p>
-            </li>
-          ))}
+          {h.principles.map((card, index) => {
+            const Icon = PRINCIPLE_ICONS[index] ?? PRINCIPLE_ICONS[0];
+            return (
+              <li
+                key={card.title}
+                className="border border-rule bg-paper p-4 sm:p-5"
+              >
+                <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-full border border-fernent-red/25 bg-fernent-red/5 text-fernent-red">
+                  <Icon className="h-7 w-7" />
+                </div>
+                <p className="font-serif font-bold text-ink">{card.title}</p>
+                <p className="mt-2 text-sm leading-relaxed text-ink/85">
+                  {card.body}
+                </p>
+              </li>
+            );
+          })}
         </ul>
       </section>
 
