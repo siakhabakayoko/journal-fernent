@@ -255,10 +255,16 @@ export function ChatWidget() {
         aria-controls={open ? panelId : undefined}
         onClick={() => setOpen((v) => !v)}
       >
-        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>
-          <path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v7A2.5 2.5 0 0 1 17.5 16H9l-4 3.5V6.5Z" />
-          <path d="M8 9h8M8 12h5" />
-        </svg>
+        <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white" aria-hidden>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/icons/icon-192.png"
+            alt=""
+            width={22}
+            height={22}
+            className="h-[22px] w-[22px] object-contain"
+          />
+        </span>
         <span className="pr-1">{open ? "Fermer" : "Discuter"}</span>
       </button>
 
@@ -271,15 +277,16 @@ export function ChatWidget() {
           className="pointer-events-auto box-border flex flex-col overflow-hidden rounded-2xl border border-rule bg-paper-elevated shadow-[0_12px_40px_rgba(20,17,15,0.18)]"
         >
           <header className="flex shrink-0 items-center gap-3 border-b border-rule bg-fernent-red px-4 py-3 text-white">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/favicon.ico"
-              alt=""
-              width={36}
-              height={36}
-              className="h-9 w-9 shrink-0 rounded-full bg-white/15 object-contain p-1.5"
-              aria-hidden
-            />
+            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white" aria-hidden>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/favicon.ico"
+                alt=""
+                width={28}
+                height={28}
+                className="h-7 w-7 object-contain"
+              />
+            </span>
             <div className="min-w-0 flex-1">
               <p className="truncate font-serif text-base font-bold leading-tight">
                 Assistant Ferñent
