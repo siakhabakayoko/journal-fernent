@@ -447,13 +447,18 @@ export function AdminPanel({
 
   async function handleGenerateCover() {
     if (!draft) return;
-    if (!draft.title.trim()) {
-      setError("Indiquez un titre avant de générer la couverture.");
+    if (!draft.title.trim() || !draft.excerpt.trim() || !draft.rubric) {
+      setError(
+        "Indiquez un titre, un extrait et une rubrique avant de générer la couverture.",
+      );
       return;
     }
     setGeneratingCover(true);
     setError("");
     setModeNote("");
+    const controller = new AbortController();
+    // Align with server FLUX timeout (~270s) + margin under maxDuration 300.
+    const timer = window.setTimeout(() => controller.abort(), 280_000);
     try {
       const res = await fetch("/api/admin/generate-cover", {
         method: "POST",
@@ -463,25 +468,46 @@ export function AdminPanel({
           excerpt: draft.excerpt,
           rubrique: draft.rubric,
         }),
+        signal: controller.signal,
       });
-      const data = await res.json().catch(() => ({}));
+      const data = (await res.json().catch(() => ({}))) as {
+        message?: string;
+        error?: string;
+        url?: string;
+      };
       if (!res.ok) {
+        const detail =
+          (typeof data.message === "string" && data.message.trim()) ||
+          (typeof data.error === "string" && data.error.trim()) ||
+          "";
         setError(
-          data.message ||
-            data.error ||
-            "Échec de la génération IA de la couverture.",
+          detail ||
+            `Échec de la génération IA de la couverture (HTTP ${res.status}).`,
         );
         return;
       }
       if (typeof data.url === "string" && data.url) {
         setDraft((d) => (d ? { ...d, coverImage: data.url as string } : d));
-        setModeNote("Couverture IA générée — vérifiez l'aperçu avant d'enregistrer.");
+        setModeNote(
+          "Couverture IA générée — vérifiez l'aperçu avant d'enregistrer.",
+        );
       } else {
         setError("Réponse IA sans URL d'image.");
       }
-    } catch {
-      setError("Erreur réseau pendant la génération de couverture.");
+    } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") {
+        setError(
+          "Délai dépassé : la génération FLUX n'a pas répondu à temps. Réessayez.",
+        );
+      } else {
+        setError(
+          err instanceof Error && err.message
+            ? err.message
+            : "Erreur réseau pendant la génération de couverture.",
+        );
+      }
     } finally {
+      window.clearTimeout(timer);
       setGeneratingCover(false);
     }
   }
@@ -768,63 +794,6 @@ export function AdminPanel({
               </div>
               <div>
                 <label className="block text-xs font-semibold mb-1">
-                  {t.admin.fields.coverImage}
-                </label>
-                <input
-                  value={draft.coverImage}
-                  onChange={(e) =>
-                    setDraft({ ...draft, coverImage: e.target.value })
-                  }
-                  placeholder="https://… ou /uploads/…"
-                  className="w-full border border-rule-strong px-3 py-2 text-sm"
-                />
-                <div className="mt-2 flex flex-wrap items-center gap-3">
-                  <label className="inline-flex items-center gap-2 text-xs font-semibold cursor-pointer border border-rule-strong px-3 py-1.5 hover:bg-rule">
-                    {uploading ? "…" : t.admin.upload}
-                    <input
-                      type="file"
-                      accept="image/*,.svg"
-                      className="sr-only"
-                      disabled={uploading || generatingCover}
-                      onChange={(e) =>
-                        handleUpload(e.target.files?.[0] ?? null, (url) =>
-                          setDraft((d) => (d ? { ...d, coverImage: url } : d)),
-                        )
-                      }
-                    />
-                  </label>
-                  <button
-                    type="button"
-                    onClick={handleGenerateCover}
-                    disabled={uploading || generatingCover || !draft.title.trim()}
-                    className="inline-flex items-center gap-2 text-xs font-semibold border border-fernent-red bg-fernent-red text-white px-3 py-1.5 hover:bg-fernent-red-deep disabled:opacity-50 disabled:cursor-not-allowed"
-                    title="Génère une couverture avec NVIDIA FLUX à partir du titre, de l'extrait et de la rubrique"
-                  >
-                    {generatingCover ? "Génération…" : "Générer une couverture IA"}
-                  </button>
-                  {draft.coverImage && (
-                    <div className="relative h-16 w-28 border border-rule overflow-hidden bg-rule">
-                      <Image
-                        src={draft.coverImage}
-                        alt=""
-                        fill
-                        className="object-cover"
-                        unoptimized={
-                          draft.coverImage.endsWith(".svg") ||
-                          draft.coverImage.startsWith("data:")
-                        }
-                      />
-                    </div>
-                  )}
-                </div>
-                {generatingCover && (
-                  <p className="mt-2 text-xs text-muted">
-                    Génération FLUX en cours (10–30 s)…
-                  </p>
-                )}
-              </div>
-              <div>
-                <label className="block text-xs font-semibold mb-1">
                   {t.admin.fields.excerpt}
                 </label>
                 <textarea
@@ -869,6 +838,70 @@ export function AdminPanel({
                   {t.admin.fields.commentsEnabled}
                 </label>
               </div>
+              <div>
+                <label className="block text-xs font-semibold mb-1">
+                  {t.admin.fields.coverImage}
+                </label>
+                <input
+                  value={draft.coverImage}
+                  onChange={(e) =>
+                    setDraft({ ...draft, coverImage: e.target.value })
+                  }
+                  placeholder="https://… ou /uploads/…"
+                  className="w-full border border-rule-strong px-3 py-2 text-sm"
+                />
+                <div className="mt-2 flex flex-wrap items-center gap-3">
+                  <label className="inline-flex items-center gap-2 text-xs font-semibold cursor-pointer border border-rule-strong px-3 py-1.5 hover:bg-rule">
+                    {uploading ? "…" : t.admin.upload}
+                    <input
+                      type="file"
+                      accept="image/*,.svg"
+                      className="sr-only"
+                      disabled={uploading || generatingCover}
+                      onChange={(e) =>
+                        handleUpload(e.target.files?.[0] ?? null, (url) =>
+                          setDraft((d) => (d ? { ...d, coverImage: url } : d)),
+                        )
+                      }
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleGenerateCover}
+                    disabled={
+                      uploading ||
+                      generatingCover ||
+                      !draft.title.trim() ||
+                      !draft.excerpt.trim() ||
+                      !draft.rubric
+                    }
+                    className="inline-flex items-center gap-2 text-xs font-semibold border border-fernent-red bg-fernent-red text-white px-3 py-1.5 hover:bg-fernent-red-deep disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Requiert titre, extrait et rubrique — génère une couverture NVIDIA FLUX"
+                  >
+                    {generatingCover ? "Génération…" : "Générer une couverture IA"}
+                  </button>
+                  {draft.coverImage && (
+                    <div className="relative h-16 w-28 border border-rule overflow-hidden bg-rule">
+                      <Image
+                        src={draft.coverImage}
+                        alt=""
+                        fill
+                        className="object-cover"
+                        unoptimized={
+                          draft.coverImage.endsWith(".svg") ||
+                          draft.coverImage.startsWith("data:")
+                        }
+                      />
+                    </div>
+                  )}
+                </div>
+                {generatingCover && (
+                  <p className="mt-2 text-xs text-muted">
+                    Génération FLUX en cours (peut prendre jusqu&apos;à une minute)…
+                  </p>
+                )}
+              </div>
+
               {error && <p className="text-sm text-red-700">{error}</p>}
               <div className="flex gap-2">
                 <button

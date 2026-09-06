@@ -3,11 +3,20 @@ import { promises as fs } from "fs";
 import path from "path";
 import { put } from "@vercel/blob";
 import { isAdminAuthenticated } from "@/lib/auth";
-import { generateFluxImage } from "@/lib/nvidia";
+import {
+  FLUX_DEFAULT_SIZE,
+  FLUX_FETCH_TIMEOUT_MS,
+  fluxHealthStatus,
+  generateFluxImage,
+  hasNvidiaApiKey,
+} from "@/lib/nvidia";
 
 export const runtime = "nodejs";
-/** FLUX can take 10–30s on cold start. */
-export const maxDuration = 60;
+/**
+ * FLUX can take 10–60s+ on cold start. Fluid / Hobby with Fluid Compute
+ * allows up to 300s; classic Hobby caps at 60 (Vercel clamps if unsupported).
+ */
+export const maxDuration = 300;
 
 const RUBRIC_HINTS: Record<string, string> = {
   senegal:
@@ -81,6 +90,7 @@ async function storeCoverImage(
       token: blobToken,
       contentType: mimeType,
     });
+    console.info("[generate-cover] stored on Vercel Blob", result.url);
     return result.url;
   }
 
@@ -94,13 +104,30 @@ async function storeCoverImage(
   try {
     await fs.mkdir(publicDir, { recursive: true });
     await fs.writeFile(path.join(publicDir, name), bytes);
-    return `/covers/articles/${yyyy}/${name}`;
+    const url = `/covers/articles/${yyyy}/${name}`;
+    console.info("[generate-cover] stored on filesystem", url);
+    return url;
   } catch (err) {
     console.error("[generate-cover] filesystem write failed", err);
-    // Last resort: data URL so admin can still preview / save if blob unavailable
-    const b64 = bytes.toString("base64");
-    return `data:${mimeType};base64,${b64}`;
+    // Avoid huge data-URL JSON that breaks the admin client on Vercel.
+    throw new Error(
+      "Impossible d'enregistrer l'image (système de fichiers en lecture seule). Configurez BLOB_READ_WRITE_TOKEN sur Vercel.",
+    );
   }
+}
+
+/** Health / readiness for admin cover generation. */
+export async function GET() {
+  if (!(await isAdminAuthenticated())) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
+  const health = fluxHealthStatus();
+  return NextResponse.json({
+    ...health,
+    maxDuration: 300,
+    fetchTimeoutMs: FLUX_FETCH_TIMEOUT_MS,
+    blobConfigured: Boolean(process.env.BLOB_READ_WRITE_TOKEN?.trim()),
+  });
 }
 
 export async function POST(request: Request) {
@@ -108,7 +135,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  if (!process.env.NVIDIA_API_KEY?.trim()) {
+  if (!hasNvidiaApiKey()) {
     return NextResponse.json(
       {
         error: "missing_api_key",
@@ -123,11 +150,17 @@ export async function POST(request: Request) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "invalid_json" }, { status: 400 });
+    return NextResponse.json(
+      { error: "invalid_json", message: "Corps JSON invalide." },
+      { status: 400 },
+    );
   }
 
   if (!body || typeof body !== "object") {
-    return NextResponse.json({ error: "invalid" }, { status: 400 });
+    return NextResponse.json(
+      { error: "invalid", message: "Requête invalide." },
+      { status: 400 },
+    );
   }
 
   const {
@@ -142,7 +175,10 @@ export async function POST(request: Request) {
   const titleStr = typeof title === "string" ? title.trim() : "";
   if (!titleStr && !(typeof customPrompt === "string" && customPrompt.trim())) {
     return NextResponse.json(
-      { error: "missing_title", message: "Le titre est requis pour générer une couverture." },
+      {
+        error: "missing_title",
+        message: "Le titre est requis pour générer une couverture.",
+      },
       { status: 400 },
     );
   }
@@ -165,10 +201,12 @@ export async function POST(request: Request) {
 
   try {
     const { bytes, mimeType } = await generateFluxImage(prompt, {
-      width: 1024,
-      height: 1024,
+      width: FLUX_DEFAULT_SIZE,
+      height: FLUX_DEFAULT_SIZE,
       seed: 0,
       steps: 4,
+      signal: request.signal,
+      timeoutMs: FLUX_FETCH_TIMEOUT_MS,
     });
     const url = await storeCoverImage(bytes, mimeType);
     return NextResponse.json({ url, prompt });
@@ -176,9 +214,10 @@ export async function POST(request: Request) {
     const message =
       err instanceof Error ? err.message : "Échec de la génération FLUX.";
     console.error("[generate-cover]", message);
+    const timedOut = /délai dépassé/i.test(message);
     return NextResponse.json(
-      { error: "generation_failed", message },
-      { status: 502 },
+      { error: timedOut ? "timeout" : "generation_failed", message },
+      { status: timedOut ? 504 : 502 },
     );
   }
 }

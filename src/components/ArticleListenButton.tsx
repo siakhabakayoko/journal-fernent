@@ -9,16 +9,7 @@ type Props = {
   body: string;
 };
 
-type SpeakState = "idle" | "speaking" | "paused";
-
-function preferFrenchVoice(
-  voices: SpeechSynthesisVoice[],
-): SpeechSynthesisVoice | null {
-  const frFR = voices.find((v) => /^fr-FR$/i.test(v.lang));
-  const frCA = voices.find((v) => /^fr-CA$/i.test(v.lang));
-  const frAny = voices.find((v) => /^fr\b/i.test(v.lang));
-  return frFR || frCA || frAny || null;
-}
+type SpeakState = "idle" | "loading" | "speaking" | "paused" | "error";
 
 function buildPlainText(title: string, excerpt: string, body: string): string {
   const paragraphs = body.split(/\n\n+/).map((p) => p.trim()).filter(Boolean);
@@ -27,188 +18,176 @@ function buildPlainText(title: string, excerpt: string, body: string): string {
     .join("\n\n");
 }
 
-/** Split long text into utterance-sized chunks (browser limits). */
-function chunkText(text: string, maxLen = 220): string[] {
-  const chunks: string[] = [];
-  const paragraphs = text
-    .split(/\n+/)
-    .map((p) => p.trim())
-    .filter(Boolean);
-
-  for (const para of paragraphs) {
-    if (para.length <= maxLen) {
-      chunks.push(para);
-      continue;
-    }
-    const sentences =
-      para.match(/[^.!?…]+[.!?…]+(?:\s|$)|[^.!?…]+$/g) ?? [para];
-    let current = "";
-    for (const raw of sentences) {
-      const s = raw.trim();
-      if (!s) continue;
-      if (current && `${current} ${s}`.length > maxLen) {
-        chunks.push(current);
-        current = s;
-      } else {
-        current = current ? `${current} ${s}` : s;
-      }
-    }
-    if (current) chunks.push(current);
-  }
-  return chunks;
-}
-
 const btnClass =
   "inline-flex items-center gap-1.5 rounded-sm border border-rule-strong bg-paper-elevated px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-ink transition hover:border-fernent-red hover:text-fernent-red disabled:cursor-not-allowed disabled:opacity-50";
 
 export function ArticleListenButton({ title, excerpt, body }: Props) {
   const { t } = useLanguage();
-  const [supported, setSupported] = useState<boolean | null>(null);
   const [state, setState] = useState<SpeakState>("idle");
-  const voiceRef = useRef<SpeechSynthesisVoice | null>(null);
-  const queueRef = useRef<string[]>([]);
-  const indexRef = useRef(0);
-  const cancelledRef = useRef(false);
-  const speakNextRef = useRef<() => void>(() => {});
+  const [errorMsg, setErrorMsg] = useState("");
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const objectUrlRef = useRef<string | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
-  speakNextRef.current = () => {
-    if (cancelledRef.current || typeof window === "undefined") return;
-    const synth = window.speechSynthesis;
-    if (!synth) return;
-
-    if (indexRef.current >= queueRef.current.length) {
-      setState("idle");
-      return;
+  function cleanupAudio() {
+    abortRef.current?.abort();
+    abortRef.current = null;
+    const audio = audioRef.current;
+    if (audio) {
+      audio.pause();
+      audio.removeAttribute("src");
+      audio.load();
+      audioRef.current = null;
     }
-
-    const text = queueRef.current[indexRef.current];
-    const utter = new SpeechSynthesisUtterance(text);
-    utter.rate = 0.95;
-    utter.pitch = 1;
-    utter.lang = "fr-FR";
-    if (voiceRef.current) utter.voice = voiceRef.current;
-
-    utter.onend = () => {
-      if (cancelledRef.current) return;
-      indexRef.current += 1;
-      speakNextRef.current();
-    };
-    utter.onerror = () => {
-      if (cancelledRef.current) return;
-      setState("idle");
-    };
-
-    synth.speak(utter);
-  };
+    if (objectUrlRef.current) {
+      URL.revokeObjectURL(objectUrlRef.current);
+      objectUrlRef.current = null;
+    }
+  }
 
   useEffect(() => {
-    if (typeof window === "undefined" || !window.speechSynthesis) {
-      setSupported(false);
-      return;
-    }
-    setSupported(true);
-
-    const loadVoices = () => {
-      voiceRef.current = preferFrenchVoice(window.speechSynthesis.getVoices());
-    };
-    loadVoices();
-    window.speechSynthesis.addEventListener("voiceschanged", loadVoices);
-
-    return () => {
-      cancelledRef.current = true;
-      window.speechSynthesis.removeEventListener("voiceschanged", loadVoices);
-      window.speechSynthesis.cancel();
-    };
+    return () => cleanupAudio();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Cancel when article content changes (client navigation between articles)
+  // Reset when article content changes
   useEffect(() => {
-    cancelledRef.current = true;
-    if (typeof window !== "undefined" && window.speechSynthesis) {
-      window.speechSynthesis.cancel();
-    }
-    queueRef.current = [];
-    indexRef.current = 0;
+    cleanupAudio();
     setState("idle");
-    cancelledRef.current = false;
+    setErrorMsg("");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [title, excerpt, body]);
 
-  function start() {
-    if (!window.speechSynthesis) return;
-    cancelledRef.current = false;
-    window.speechSynthesis.cancel();
-    queueRef.current = chunkText(buildPlainText(title, excerpt, body));
-    indexRef.current = 0;
-    setState("speaking");
-    // Let cancel settle before speaking (Chrome quirk)
-    window.setTimeout(() => speakNextRef.current(), 40);
+  async function start() {
+    cleanupAudio();
+    setErrorMsg("");
+    setState("loading");
+
+    const controller = new AbortController();
+    abortRef.current = controller;
+    const text = buildPlainText(title, excerpt, body);
+
+    try {
+      const res = await fetch("/api/tts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+        signal: controller.signal,
+      });
+
+      if (!res.ok) {
+        const data = (await res.json().catch(() => ({}))) as {
+          message?: string;
+          error?: string;
+        };
+        const detail =
+          (typeof data.message === "string" && data.message.trim()) ||
+          (typeof data.error === "string" && data.error.trim()) ||
+          "";
+        throw new Error(
+          detail || t.article.listenError || "Synthèse vocale indisponible.",
+        );
+      }
+
+      const blob = await res.blob();
+      if (!blob.size) {
+        throw new Error(t.article.listenError);
+      }
+
+      const url = URL.createObjectURL(blob);
+      objectUrlRef.current = url;
+      const audio = new Audio(url);
+      audioRef.current = audio;
+
+      audio.onended = () => {
+        setState("idle");
+      };
+      audio.onerror = () => {
+        setState("error");
+        setErrorMsg(t.article.listenError);
+      };
+
+      await audio.play();
+      setState("speaking");
+    } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") {
+        setState("idle");
+        return;
+      }
+      setState("error");
+      setErrorMsg(
+        err instanceof Error && err.message
+          ? err.message
+          : t.article.listenError,
+      );
+    }
   }
 
   function pause() {
-    window.speechSynthesis?.pause();
+    audioRef.current?.pause();
     setState("paused");
   }
 
   function resume() {
-    window.speechSynthesis?.resume();
-    setState("speaking");
+    void audioRef.current?.play().then(() => setState("speaking"));
   }
 
   function stop() {
-    cancelledRef.current = true;
-    window.speechSynthesis?.cancel();
-    queueRef.current = [];
-    indexRef.current = 0;
+    cleanupAudio();
     setState("idle");
-    cancelledRef.current = false;
-  }
-
-  if (supported === null) return null;
-
-  if (!supported) {
-    return (
-      <button
-        type="button"
-        disabled
-        className={btnClass}
-        title={t.article.unsupported}
-      >
-        {t.article.listen}
-      </button>
-    );
+    setErrorMsg("");
   }
 
   return (
-    <div
-      className="flex flex-wrap items-center gap-2"
-      role="group"
-      aria-label={t.article.listen}
-    >
-      {state === "idle" && (
-        <button type="button" onClick={start} className={btnClass}>
-          <ListenIcon />
-          {t.article.listen}
-        </button>
-      )}
-      {state === "speaking" && (
-        <>
-          <button type="button" onClick={pause} className={btnClass}>
-            {t.article.pause}
+    <div className="flex flex-col gap-1.5" role="group" aria-label={t.article.listen}>
+      <div className="flex flex-wrap items-center gap-2">
+        {state === "idle" && (
+          <button type="button" onClick={() => void start()} className={btnClass}>
+            <ListenIcon />
+            {t.article.listen}
           </button>
-          <button type="button" onClick={stop} className={btnClass}>
-            {t.article.stop}
+        )}
+        {state === "loading" && (
+          <button type="button" disabled className={btnClass}>
+            {t.article.listenLoading}
           </button>
-        </>
-      )}
-      {state === "paused" && (
-        <>
-          <button type="button" onClick={resume} className={btnClass}>
-            {t.article.resume}
-          </button>
-          <button type="button" onClick={stop} className={btnClass}>
-            {t.article.stop}
-          </button>
-        </>
+        )}
+        {state === "speaking" && (
+          <>
+            <button type="button" onClick={pause} className={btnClass}>
+              {t.article.pause}
+            </button>
+            <button type="button" onClick={stop} className={btnClass}>
+              {t.article.stop}
+            </button>
+          </>
+        )}
+        {state === "paused" && (
+          <>
+            <button type="button" onClick={resume} className={btnClass}>
+              {t.article.resume}
+            </button>
+            <button type="button" onClick={stop} className={btnClass}>
+              {t.article.stop}
+            </button>
+          </>
+        )}
+        {state === "error" && (
+          <>
+            <button type="button" onClick={() => void start()} className={btnClass}>
+              <ListenIcon />
+              {t.article.listen}
+            </button>
+            <button type="button" onClick={stop} className={btnClass}>
+              {t.article.stop}
+            </button>
+          </>
+        )}
+      </div>
+      {state === "error" && errorMsg && (
+        <p className="text-xs text-red-700 max-w-md" role="alert">
+          {errorMsg}
+        </p>
       )}
     </div>
   );

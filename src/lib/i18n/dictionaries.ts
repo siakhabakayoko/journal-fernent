@@ -114,6 +114,8 @@ export const dictionaries = {
       resume: "Reprendre",
       stop: "Arrêter",
       unsupported: "Lecture audio non disponible sur cet appareil.",
+      listenLoading: "Préparation audio…",
+      listenError: "Synthèse vocale indisponible pour le moment. Réessayez plus tard.",
     },
     contact: {
       title: "Contact",
@@ -356,6 +358,8 @@ export const dictionaries = {
       resume: "Dellu ci",
       stop: "Daañ",
       unsupported: "Déglu audio amul ci aparel bii.",
+      listenLoading: "Audio a ngi waaj…",
+      listenError: "Déglu vocal amul léegi. Jéemaatal ci kanam.",
     },
     contact: {
       title: "Jokkalante",
