@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "db:seed": "bun run scripts/seed-turso.ts",
-    "rag:index": "bun run scripts/rag-index.ts"
+    "rag:index": "bun run scripts/rag-index.ts",
+    "audio:backfill": "bun run scripts/backfill-article-audio.ts"
   },
   "dependencies": {
     "@libsql/client": "^0.18.0",
