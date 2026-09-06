@@ -77,11 +77,13 @@ function extForMime(mime: string): string {
 async function storeCoverImage(
   bytes: Buffer,
   mimeType: string,
+  opts?: { publicUrlFallback?: string },
 ): Promise<string> {
   const now = new Date();
   const yyyy = String(now.getUTCFullYear());
   const name = `${Date.now().toString(36)}-flux-cover${extForMime(mimeType)}`;
   const relativeKey = `covers/articles/${yyyy}/${name}`;
+  const fallback = opts?.publicUrlFallback?.trim() || "";
 
   const blobToken = process.env.BLOB_READ_WRITE_TOKEN?.trim();
   if (blobToken) {
@@ -109,6 +111,15 @@ async function storeCoverImage(
     return url;
   } catch (err) {
     console.error("[generate-cover] filesystem write failed", err);
+    // On Vercel (read-only FS) without Blob: prefer a stable public provider URL
+    // (Pollinations) over hard-failing — AdminPanel can still set coverImage.
+    if (fallback) {
+      console.info(
+        "[generate-cover] using public URL fallback (no Blob / read-only FS)",
+        fallback.slice(0, 120),
+      );
+      return fallback;
+    }
     // Avoid huge data-URL JSON that breaks the admin client on Vercel.
     throw new Error(
       "Impossible d'enregistrer l'image (système de fichiers en lecture seule). Configurez BLOB_READ_WRITE_TOKEN sur Vercel.",
@@ -190,15 +201,23 @@ export async function POST(request: Request) {
   });
 
   try {
-    const { bytes, mimeType, provider } = await generateCoverImage(prompt, {
-      width: FLUX_DEFAULT_SIZE,
-      height: FLUX_DEFAULT_SIZE,
-      seed: 0,
-      steps: 4,
-      signal: request.signal,
-      timeoutMs: FLUX_FETCH_TIMEOUT_MS,
+    const { bytes, mimeType, provider, publicUrl } = await generateCoverImage(
+      prompt,
+      {
+        width: FLUX_DEFAULT_SIZE,
+        height: FLUX_DEFAULT_SIZE,
+        seed: 0,
+        steps: 4,
+        signal: request.signal,
+        timeoutMs: FLUX_FETCH_TIMEOUT_MS,
+      },
+    );
+    const url = await storeCoverImage(bytes, mimeType, {
+      // Pollinations prompt URLs are publicly fetchable — use as last-resort
+      // cover URL when Blob token is missing and the deploy FS is read-only.
+      publicUrlFallback:
+        provider === "pollinations" && publicUrl ? publicUrl : undefined,
     });
-    const url = await storeCoverImage(bytes, mimeType);
     console.info("[generate-cover] provider=", provider, "nvidiaKey=", hasNvidiaApiKey());
     return NextResponse.json(
       { url, prompt, provider },

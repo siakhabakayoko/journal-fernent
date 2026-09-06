@@ -38,7 +38,7 @@ function Cover({
       className={className ?? "object-cover"}
       sizes={sizes ?? "(max-width: 768px) 100vw, 50vw"}
       priority={priority}
-      unoptimized={src.endsWith(".svg")}
+      unoptimized={src.endsWith(".svg") || src.includes("pollinations.ai")}
     />
   );
 }

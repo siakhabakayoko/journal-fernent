@@ -47,6 +47,11 @@ export type FluxGenerateResult = {
   mimeType: string;
   /** Which backend produced the image. */
   provider: ImageProvider;
+  /**
+   * Stable public URL when the provider exposes one (Pollinations prompt URLs).
+   * Useful as a storage fallback when Blob/FS are unavailable.
+   */
+  publicUrl?: string;
 };
 
 export function hasNvidiaApiKey(): boolean {
@@ -262,6 +267,23 @@ export async function generateFluxImage(
 }
 
 /**
+ * Build a publicly fetchable Pollinations image URL for a prompt.
+ * Same encoding rules as generatePollinationsImage (prompt truncated to 1200).
+ */
+export function buildPollinationsImageUrl(
+  prompt: string,
+  opts: { width?: number; height?: number } = {},
+): string {
+  const shortPrompt = prompt.trim().slice(0, 1200);
+  const width = opts.width ?? FLUX_DEFAULT_SIZE;
+  const height = opts.height ?? FLUX_DEFAULT_SIZE;
+  return (
+    `https://image.pollinations.ai/prompt/${encodeURIComponent(shortPrompt)}` +
+    `?width=${width}&height=${height}&nologo=true&model=flux`
+  );
+}
+
+/**
  * Fast Pollinations text-to-image fallback (returns JPEG/PNG in ~2–3s).
  * https://image.pollinations.ai/prompt/{encodeURIComponent(prompt)}?...
  */
@@ -283,9 +305,7 @@ export async function generatePollinationsImage(
 
   // Keep prompt reasonably short for URL length limits.
   const shortPrompt = trimmed.slice(0, 1200);
-  const url =
-    `https://image.pollinations.ai/prompt/${encodeURIComponent(shortPrompt)}` +
-    `?width=${width}&height=${height}&nologo=true&model=flux`;
+  const url = buildPollinationsImageUrl(trimmed, { width, height });
 
   const { signal, cleanup } = mergeSignals(opts.signal, timeoutMs);
   const started = Date.now();
@@ -324,7 +344,7 @@ export async function generatePollinationsImage(
       mimeType,
     });
 
-    return { bytes, base64, mimeType, provider: "pollinations" };
+    return { bytes, base64, mimeType, provider: "pollinations", publicUrl: url };
   } catch (err) {
     if (isAbortError(err)) {
       throw new Error(

@@ -896,7 +896,8 @@ export function AdminPanel({
                         className="object-cover"
                         unoptimized={
                           draft.coverImage.endsWith(".svg") ||
-                          draft.coverImage.startsWith("data:")
+                          draft.coverImage.startsWith("data:") ||
+                          draft.coverImage.includes("pollinations.ai")
                         }
                       />
                     </div>
@@ -951,7 +952,7 @@ export function AdminPanel({
                             alt=""
                             fill
                             className="object-cover"
-                            unoptimized={a.coverImage.endsWith(".svg")}
+                            unoptimized={a.coverImage.endsWith(".svg") || a.coverImage.includes("pollinations.ai")}
                           />
                         </div>
                       )}

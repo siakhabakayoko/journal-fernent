@@ -26,7 +26,7 @@ export function ArticleChrome({ article }: { article: Article }) {
             className="object-cover"
             sizes="(max-width: 768px) 100vw, 768px"
             priority
-            unoptimized={cover.endsWith(".svg")}
+            unoptimized={cover.endsWith(".svg") || cover.includes("pollinations.ai")}
           />
         </div>
       )}
