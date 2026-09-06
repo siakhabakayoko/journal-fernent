@@ -120,7 +120,7 @@ export function buildAlertEmail(input: AlertEmailInput): AlertEmail {
           <tr>
             <td style="padding: 28px 36px 20px; text-align: center; border-bottom: 1px solid ${BRAND.rule};">
               <a href="${safeSite}" style="text-decoration: none; color: ${BRAND.ink};">
-                <img src="${safeLogo}" alt="Journal Ferñent" width="56" height="56" style="display: block; margin: 0 auto 14px; border: 0; outline: none;" />
+                <img src="${safeLogo}" alt="Journal Ferñent" width="220" height="58" style="display: block; margin: 0 auto 14px; border: 0; outline: none; width: 220px; max-width: 80%; height: auto;" />
               </a>
               <p style="margin: 0 0 6px; font-family: Georgia, 'Times New Roman', Times, serif; font-size: 22px; line-height: 1.2; letter-spacing: 0.02em; color: ${BRAND.ink};">
                 <a href="${safeSite}" style="text-decoration: none; color: ${BRAND.ink};">Journal Ferñent</a>
