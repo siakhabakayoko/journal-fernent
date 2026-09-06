@@ -34,14 +34,16 @@ Ouvrir http://localhost:3000
 | Variable | Description |
 |----------|-------------|
 | `ADMIN_PASSWORD` | Mot de passe de `/admin`. Défaut local : `fernent-dev` |
-| `NEXT_PUBLIC_SITE_URL` | URL canonique (SEO / Open Graph) |
+| `NEXT_PUBLIC_SITE_URL` | URL canonique (SEO / Open Graph / liens e-mail) |
 | `TURSO_DATABASE_URL` | URL libSQL Turso (ex. `libsql://…turso.io`) |
 | `TURSO_AUTH_TOKEN` | Token d'auth Turso |
 | `BLOB_READ_WRITE_TOKEN` | Token Vercel Blob (uploads images/PDF sur Vercel) |
+| `RESEND_API_KEY` | Clé API [Resend](https://resend.com) pour alertes newsletter (optionnel) |
+| `EMAIL_FROM` | Expéditeur Resend (ex. `Journal Ferñent <alerts@votre-domaine.com>`). Défaut test : `onboarding@resend.dev` |
 
 Sans `TURSO_*`, l'app continue de fonctionner depuis `content/*.json` (et mémoire sur FS lecture seule).
 
-Sur **Vercel** : Project Settings → Environment Variables → ajouter `ADMIN_PASSWORD`, et pour la prod durable `TURSO_DATABASE_URL` + `TURSO_AUTH_TOKEN`. Pour les uploads, ajoutez aussi `BLOB_READ_WRITE_TOKEN` (sinon collez une URL dans le formulaire admin).
+Sur **Vercel** : Project Settings → Environment Variables → ajouter `ADMIN_PASSWORD`, et pour la prod durable `TURSO_DATABASE_URL` + `TURSO_AUTH_TOKEN`. Pour les uploads, ajoutez aussi `BLOB_READ_WRITE_TOKEN` (sinon collez une URL dans le formulaire admin). Pour les **alertes e-mail** aux abonnés newsletter à chaque nouvelle brève / capsule / mensuel : `RESEND_API_KEY`, `EMAIL_FROM` (domaine vérifié en prod), et `NEXT_PUBLIC_SITE_URL`.
 
 ## Persistance (Turso)
 
@@ -69,8 +71,16 @@ Schéma aligné sur `src/lib/types.ts` :
 ## Numéros mensuels (PDF)
 
 - Type `MonthlyIssue` + table / JSON `content/issues.json`.
-- Page `/archives` : liste des numéros avec bouton **Télécharger le PDF**, plus le catalogue d'articles.
-- Admin → onglet **Numéros mensuels** : créer / éditer titre, mois/année, description, PDF, couverture.
+- Affichage texte + **Consulter** / **Télécharger** uniquement (pas d'image de couverture).
+- Page `/mensuel` (et section accueil) : liste des numéros PDF.
+- Admin → onglet **Numéros mensuels** : créer / éditer titre, mois/année, description, PDF.
+
+## Alertes newsletter (Resend)
+
+Quand l'admin **crée** une brève, une capsule ou un mensuel, tous les e-mails de `newsletter` reçoivent une alerte via Resend (`src/lib/notify-subscribers.ts`).
+
+- Sans `RESEND_API_KEY` : warning en log, publication **non bloquée**.
+- En production : vérifier le domaine chez Resend et renseigner `EMAIL_FROM`.
 
 ### TODO — ajouter le vrai PDF
 
@@ -131,7 +141,7 @@ Bascule **FR / WO** (Wolof) pour le chrome UI. Articles principalement en franç
 
 1. Importer le dépôt GitHub `siakhabakayoko/journal-fernent`
 2. Framework preset : Next.js
-3. Ajouter `ADMIN_PASSWORD` (+ `TURSO_*` + optionnel `BLOB_READ_WRITE_TOKEN`)
+3. Ajouter `ADMIN_PASSWORD` (+ `TURSO_*` + optionnel `BLOB_READ_WRITE_TOKEN` + `RESEND_API_KEY` / `EMAIL_FROM` / `NEXT_PUBLIC_SITE_URL`)
 4. Deploy
 
 ```bash

@@ -7,6 +7,7 @@ import {
   upsertArticle,
 } from "@/lib/articles";
 import type { Article, Rubric } from "@/lib/types";
+import { notifySubscribers } from "@/lib/notify-subscribers";
 
 const RUBRICS: Rubric[] = [
   "senegal",
@@ -35,8 +36,16 @@ export async function POST(request: Request) {
   }
   const rubric = RUBRICS.includes(body.rubric) ? (body.rubric as Rubric) : "senegal";
   const coverImage = String(body.coverImage || "").trim() || undefined;
+  const id =
+    typeof body.id === "string" && body.id
+      ? body.id
+      : `a_${Date.now().toString(36)}`;
+
+  const existing = (await getArticles()).find((a) => a.id === id);
+  const isCreate = !existing;
+
   const article: Article = {
-    id: typeof body.id === "string" && body.id ? body.id : `a_${Date.now().toString(36)}`,
+    id,
     slug:
       typeof body.slug === "string" && body.slug.trim()
         ? slugify(body.slug)
@@ -52,6 +61,18 @@ export async function POST(request: Request) {
     coverImage,
   };
   const result = await upsertArticle(article);
+
+  if (isCreate) {
+    void notifySubscribers({
+      kind: "article",
+      title: article.title,
+      excerpt: article.excerpt,
+      path: `/article/${article.slug}`,
+    }).catch((err) =>
+      console.error("[admin/articles] notify failed", err),
+    );
+  }
+
   return NextResponse.json(result);
 }
 

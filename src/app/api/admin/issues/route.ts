@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { isAdminAuthenticated } from "@/lib/auth";
 import { deleteIssue, getIssues, slugify, upsertIssue } from "@/lib/issues";
 import type { MonthlyIssue } from "@/lib/types";
+import { notifySubscribers } from "@/lib/notify-subscribers";
 
 export async function GET() {
   if (!(await isAdminAuthenticated())) {
@@ -21,11 +22,16 @@ export async function POST(request: Request) {
   }
   const month = Math.min(12, Math.max(1, Number(body.month) || 1));
   const year = Number(body.year) || new Date().getFullYear();
+  const id =
+    typeof body.id === "string" && body.id
+      ? body.id
+      : `iss_${Date.now().toString(36)}`;
+
+  const existing = (await getIssues()).find((i) => i.id === id);
+  const isCreate = !existing;
+
   const issue: MonthlyIssue = {
-    id:
-      typeof body.id === "string" && body.id
-        ? body.id
-        : `iss_${Date.now().toString(36)}`,
+    id,
     slug:
       typeof body.slug === "string" && body.slug.trim()
         ? slugify(body.slug)
@@ -35,12 +41,25 @@ export async function POST(request: Request) {
     year,
     description: String(body.description || "").trim() || undefined,
     pdfUrl: String(body.pdfUrl || "").trim(),
-    coverImage: String(body.coverImage || "").trim() || undefined,
+    // Cover images disabled for mensuels — omit on save
+    coverImage: undefined,
     publishedAt: String(
       body.publishedAt || `${year}-${String(month).padStart(2, "0")}-01`,
     ),
   };
   const result = await upsertIssue(issue);
+
+  if (isCreate) {
+    void notifySubscribers({
+      kind: "issue",
+      title: issue.title,
+      excerpt: issue.description,
+      path: "/mensuel",
+    }).catch((err) =>
+      console.error("[admin/issues] notify failed", err),
+    );
+  }
+
   return NextResponse.json(result);
 }
 

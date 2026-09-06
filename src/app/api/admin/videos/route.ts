@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { isAdminAuthenticated } from "@/lib/auth";
 import { deleteVideo, getVideos, normalizeVideo, upsertVideo } from "@/lib/videos";
 import { isRubric, type Video } from "@/lib/types";
+import { notifySubscribers } from "@/lib/notify-subscribers";
 
 export async function GET() {
   if (!(await isAdminAuthenticated())) {
@@ -19,11 +20,16 @@ export async function POST(request: Request) {
   if (!body || typeof body.title !== "string") {
     return NextResponse.json({ error: "invalid" }, { status: 400 });
   }
+  const id =
+    typeof body.id === "string" && body.id
+      ? body.id
+      : `v_${Date.now().toString(36)}`;
+
+  const existing = (await getVideos()).find((v) => v.id === id);
+  const isCreate = !existing;
+
   const video: Video = normalizeVideo({
-    id:
-      typeof body.id === "string" && body.id
-        ? body.id
-        : `v_${Date.now().toString(36)}`,
+    id,
     title: body.title,
     description: String(body.description || ""),
     publishedAt: String(
@@ -41,6 +47,18 @@ export async function POST(request: Request) {
     placeholder: body.placeholder,
   });
   const result = await upsertVideo(video);
+
+  if (isCreate) {
+    void notifySubscribers({
+      kind: "video",
+      title: video.title,
+      excerpt: video.description,
+      path: "/capsules",
+    }).catch((err) =>
+      console.error("[admin/videos] notify failed", err),
+    );
+  }
+
   return NextResponse.json(result);
 }
 

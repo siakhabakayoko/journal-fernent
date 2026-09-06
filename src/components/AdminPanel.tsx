@@ -45,7 +45,6 @@ type IssueDraft = {
   year: number;
   description: string;
   pdfUrl: string;
-  coverImage: string;
   publishedAt: string;
 };
 
@@ -121,7 +120,6 @@ const emptyIssueDraft = (): IssueDraft => {
     year,
     description: "",
     pdfUrl: "",
-    coverImage: "",
     publishedAt: `${year}-${String(month).padStart(2, "0")}-01`,
   };
 };
@@ -1020,48 +1018,6 @@ export function AdminPanel({
               </div>
               <div>
                 <label className="block text-xs font-semibold mb-1">
-                  {t.admin.fields.coverImage}
-                </label>
-                <input
-                  value={issueDraft.coverImage}
-                  onChange={(e) =>
-                    setIssueDraft({ ...issueDraft, coverImage: e.target.value })
-                  }
-                  placeholder="https://… ou /covers/…"
-                  className="w-full border border-rule-strong px-3 py-2 text-sm"
-                />
-                <div className="mt-2 flex flex-wrap items-center gap-3">
-                  <label className="inline-flex items-center gap-2 text-xs font-semibold cursor-pointer border border-rule-strong px-3 py-1.5 hover:bg-rule">
-                    {uploading ? "…" : t.admin.upload}
-                    <input
-                      type="file"
-                      accept="image/*,.svg"
-                      className="sr-only"
-                      disabled={uploading}
-                      onChange={(e) =>
-                        handleUpload(e.target.files?.[0] ?? null, (url) =>
-                          setIssueDraft((d) =>
-                            d ? { ...d, coverImage: url } : d,
-                          ),
-                        )
-                      }
-                    />
-                  </label>
-                  {issueDraft.coverImage && (
-                    <div className="relative h-16 w-28 border border-rule overflow-hidden bg-rule">
-                      <Image
-                        src={issueDraft.coverImage}
-                        alt=""
-                        fill
-                        className="object-cover"
-                        unoptimized={issueDraft.coverImage.endsWith(".svg")}
-                      />
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div>
-                <label className="block text-xs font-semibold mb-1">
                   {t.admin.fields.publishedAt}
                 </label>
                 <input
@@ -1126,7 +1082,6 @@ export function AdminPanel({
                             year: iss.year,
                             description: iss.description || "",
                             pdfUrl: iss.pdfUrl || "",
-                            coverImage: iss.coverImage || "",
                             publishedAt: iss.publishedAt,
                           })
                         }

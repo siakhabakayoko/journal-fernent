@@ -77,3 +77,24 @@ export async function subscribeNewsletter(
     return { ok: true, mode: "memory", created: true };
   }
 }
+
+/** List all newsletter subscriber emails (Turso or JSON). */
+export async function listNewsletterEmails(): Promise<string[]> {
+  if (isTursoConfigured()) {
+    try {
+      await ensureSeeded();
+      await ensureSchema();
+      const db = getTursoClient();
+      const result = await db.execute(
+        "SELECT email FROM newsletter ORDER BY created_at ASC",
+      );
+      return result.rows
+        .map((r) => String((r as Record<string, unknown>).email || "").trim())
+        .filter(Boolean);
+    } catch (err) {
+      console.error("[newsletter] Turso list failed, falling back", err);
+    }
+  }
+  const entries = await loadJson();
+  return entries.map((e) => e.email).filter(Boolean);
+}
