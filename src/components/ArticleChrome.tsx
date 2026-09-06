@@ -39,7 +39,7 @@ export function ArticleChrome({ article }: { article: Article }) {
         <span className="text-rule-strong">·</span>
         <time
           dateTime={article.publishedAt}
-          className="text-muted font-normal"
+          className="text-ink font-bold"
         >
           {date}
         </time>
@@ -51,8 +51,8 @@ export function ArticleChrome({ article }: { article: Article }) {
         {article.excerpt}
       </p>
       <div className="mt-5 flex flex-wrap items-center justify-between gap-3 text-sm">
-        <p className="text-ink font-medium">
-          <span className="text-muted font-normal">{t.home.by} </span>
+        <p className="text-ink font-bold">
+          <span className="font-bold">{t.home.by} </span>
           {article.author}
         </p>
         <div className="flex items-center gap-3 text-xs text-muted uppercase tracking-wider">
