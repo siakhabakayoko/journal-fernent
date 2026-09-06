@@ -68,7 +68,7 @@ export function ArticleCard({
             {rubricLabel}
           </Link>
           <span className="text-rule-strong">·</span>
-          <time dateTime={article.publishedAt} className="text-muted">
+          <time dateTime={article.publishedAt} className="text-ink font-bold">
             {formatDate(article.publishedAt, locale)}
           </time>
         </div>
@@ -107,7 +107,7 @@ export function ArticleCard({
           aria-hidden
         />
         <div className="absolute inset-x-0 bottom-0 z-10 p-4 sm:p-5">
-          <span className="kicker !text-white/90">{rubricLabel}</span>
+          <span className="kicker !text-fernent-red drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)]">{rubricLabel}</span>
           <h2
             className={`mt-2 font-serif font-bold text-white leading-snug ${
               isFeatured
@@ -127,7 +127,7 @@ export function ArticleCard({
       >
         <time
           dateTime={article.publishedAt}
-          className="text-xs text-muted font-normal"
+          className="text-xs text-ink font-bold"
         >
           {formatDate(article.publishedAt, locale)}
         </time>
@@ -147,7 +147,7 @@ export function ArticleCard({
               : "text-sm border-t border-rule pt-3"
           }`}
         >
-          <span className={`text-muted ${isFeatured ? "" : "text-xs"}`}>
+          <span className={`font-bold text-ink ${isFeatured ? "" : "text-xs"}`}>
             {t.home.by} {article.author}
           </span>
           <Link
