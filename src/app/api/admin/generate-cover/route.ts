@@ -14,7 +14,8 @@ import {
 
 export const runtime = "nodejs";
 /**
- * NVIDIA attempt ~35s + Pollinations ~20s. Align with Hobby ~60s cap.
+ * FLUX.1-dev ~45s (+ optional schnell ~20s) + Pollinations ~20s.
+ * Align with Hobby ~60s cap; chain falls back early on failure.
  */
 export const maxDuration = 60;
 
@@ -207,7 +208,6 @@ export async function POST(request: Request) {
         width: FLUX_DEFAULT_SIZE,
         height: FLUX_DEFAULT_SIZE,
         seed: 0,
-        steps: 4,
         signal: request.signal,
         timeoutMs: FLUX_FETCH_TIMEOUT_MS,
       },

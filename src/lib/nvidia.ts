@@ -1,38 +1,60 @@
 /**
- * NVIDIA Build — FLUX.1-schnell image generation client + Pollinations fallback.
- * Docs: https://docs.api.nvidia.com/nim/reference/black-forest-labs-flux_1-schnell-infer
+ * NVIDIA Build — FLUX.1-dev (primary) + FLUX.1-schnell + optional Qwen-Image
+ * + Pollinations fallback for cover generation.
  *
- * Hosted invoke URL (public snippet — no NVCF UUID for this model):
+ * FLUX.1-dev:
+ *   https://ai.api.nvidia.com/v1/genai/black-forest-labs/flux.1-dev
+ * FLUX.1-schnell:
  *   https://ai.api.nvidia.com/v1/genai/black-forest-labs/flux.1-schnell
  *
  * Response shape (hosted Build API): { artifacts: [{ base64: string, finishReason?: string }] }
  * Also tolerates OpenAI-style { data: [{ b64_json }] } and bare { image }.
+ *
+ * Optional IMAGE_MODEL=qwen/qwen-image|qwen/qwen-image-2512 tries the OpenAI-compatible
+ * images API first (often 404 on free hosted tier — then continues to FLUX).
  */
+
+export const FLUX_DEV_URL =
+  "https://ai.api.nvidia.com/v1/genai/black-forest-labs/flux.1-dev";
 
 export const FLUX_SCHNELL_URL =
   "https://ai.api.nvidia.com/v1/genai/black-forest-labs/flux.1-schnell";
 
-/** Documented sizes for hosted FLUX.1-schnell (1024 preferred; 512 often 422s). */
+/** OpenAI-compatible NVIDIA Integrate images endpoint (Qwen optional path). */
+export const NVIDIA_IMAGES_URL =
+  "https://integrate.api.nvidia.com/v1/images/generations";
+
+/** Documented sizes for hosted FLUX (1024 preferred; 512 often 422s). */
 export const FLUX_DEFAULT_SIZE = 1024 as const;
 
 /**
- * Short NVIDIA attempt budget. ai.api.nvidia.com often hangs with 0-byte
- * responses from some environments; Vercel Hobby also caps ~60s.
+ * Primary FLUX.1-dev attempt budget (~10s observed success; hang guard).
+ * Vercel Hobby also caps ~60s for the whole route.
  */
-export const FLUX_FETCH_TIMEOUT_MS = 35_000;
+export const FLUX_FETCH_TIMEOUT_MS = 45_000;
+
+/** Secondary FLUX.1-schnell attempt budget. */
+export const FLUX_SCHNELL_TIMEOUT_MS = 20_000;
 
 /** Overall client/server budget including Pollinations fallback. */
 export const COVER_TOTAL_TIMEOUT_MS = 55_000;
 
 export const POLLINATIONS_TIMEOUT_MS = 20_000;
 
-export type ImageProvider = "nvidia-flux" | "pollinations";
+const QWEN_MODELS = new Set(["qwen/qwen-image", "qwen/qwen-image-2512"]);
+
+export type ImageProvider =
+  | "nvidia-flux-dev"
+  | "nvidia-flux"
+  | "nvidia-qwen"
+  | "pollinations";
 
 export type FluxGenerateOptions = {
   width?: number;
   height?: number;
   seed?: number;
   steps?: number;
+  cfg_scale?: number;
   /** AbortSignal or timeout override (ms). */
   signal?: AbortSignal;
   timeoutMs?: number;
@@ -144,6 +166,12 @@ export function extractFluxBase64(payload: unknown): string {
   );
 }
 
+function getConfiguredQwenModel(): string | null {
+  const model = process.env.IMAGE_MODEL?.trim();
+  if (model && QWEN_MODELS.has(model)) return model;
+  return null;
+}
+
 /**
  * Lightweight check: key present + FLUX URL reachable (OPTIONS/HEAD not always
  * supported — we only verify env here; generation does the real call).
@@ -156,24 +184,33 @@ export function fluxHealthStatus(): {
   message: string;
 } {
   const hasKey = hasNvidiaApiKey();
+  const qwen = getConfiguredQwenModel();
   return {
     ok: true, // Pollinations fallback always available
     hasKey,
-    url: FLUX_SCHNELL_URL,
+    url: FLUX_DEV_URL,
     fallback: "pollinations",
     message: hasKey
-      ? "NVIDIA_API_KEY présente — FLUX puis repli Pollinations."
+      ? qwen
+        ? `NVIDIA_API_KEY présente — chaîne Qwen (${qwen}, souvent 404 hors free tier) → FLUX.1-dev → FLUX.1-schnell → Pollinations.`
+        : "NVIDIA_API_KEY présente — FLUX.1-dev puis FLUX.1-schnell puis repli Pollinations. (Qwen-Image n'est pas sur le free hosted tier.)"
       : "NVIDIA_API_KEY absente — génération via Pollinations.",
   };
 }
 
+type NvidiaFluxKind = "dev" | "schnell";
+
 /**
- * Call NVIDIA Build FLUX.1-schnell and return image bytes + base64.
- * Public sample body: { prompt, width, height, seed, steps }.
+ * Shared NVIDIA hosted FLUX invoke (dev or schnell).
+ * Body: { prompt, width, height, seed, steps, cfg_scale? }.
  */
-export async function generateFluxImage(
+export async function generateNvidiaFluxImage(
+  url: string,
   prompt: string,
-  opts: FluxGenerateOptions = {},
+  opts: FluxGenerateOptions & {
+    kind?: NvidiaFluxKind;
+    provider?: ImageProvider;
+  } = {},
 ): Promise<FluxGenerateResult> {
   const trimmed = prompt.trim();
   if (!trimmed) throw new Error("Le prompt est vide.");
@@ -181,35 +218,57 @@ export async function generateFluxImage(
     throw new Error("Le prompt dépasse 10 000 caractères.");
   }
 
+  const kind: NvidiaFluxKind =
+    opts.kind ??
+    (url.includes("flux.1-dev") ? "dev" : "schnell");
+  const provider: ImageProvider =
+    opts.provider ?? (kind === "dev" ? "nvidia-flux-dev" : "nvidia-flux");
+
   const width = opts.width ?? FLUX_DEFAULT_SIZE;
   const height = opts.height ?? FLUX_DEFAULT_SIZE;
   const seed = opts.seed ?? 0;
-  const steps = Math.min(4, Math.max(1, opts.steps ?? 4));
-  const timeoutMs = opts.timeoutMs ?? FLUX_FETCH_TIMEOUT_MS;
 
-  // Public hosted sample fields (+ cfg_scale tolerated by the API).
-  const body = {
+  let steps: number;
+  let cfg_scale: number | undefined;
+  let defaultTimeout: number;
+
+  if (kind === "dev") {
+    steps = Math.min(50, Math.max(5, opts.steps ?? 28));
+    cfg_scale = opts.cfg_scale ?? 3.5;
+    defaultTimeout = FLUX_FETCH_TIMEOUT_MS;
+  } else {
+    steps = Math.min(4, Math.max(1, opts.steps ?? 4));
+    cfg_scale = opts.cfg_scale;
+    defaultTimeout = FLUX_SCHNELL_TIMEOUT_MS;
+  }
+
+  const timeoutMs = opts.timeoutMs ?? defaultTimeout;
+
+  const body: Record<string, unknown> = {
     prompt: trimmed,
     height,
     width,
     seed,
     steps,
   };
+  if (cfg_scale != null) body.cfg_scale = cfg_scale;
 
   const { signal, cleanup } = mergeSignals(opts.signal, timeoutMs);
 
   const started = Date.now();
-  console.info("[nvidia/flux] POST", FLUX_SCHNELL_URL, {
+  const label = kind === "dev" ? "flux-dev" : "flux-schnell";
+  console.info(`[nvidia/${label}] POST`, url, {
     width,
     height,
     steps,
     seed,
+    cfg_scale,
     promptLen: trimmed.length,
     timeoutMs,
   });
 
   try {
-    const res = await fetch(FLUX_SCHNELL_URL, {
+    const res = await fetch(url, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${getNvidiaApiKey()}`,
@@ -233,9 +292,9 @@ export async function generateFluxImage(
         json && typeof json === "object"
           ? JSON.stringify(json).slice(0, 500)
           : text.slice(0, 500);
-      console.error("[nvidia/flux] HTTP", res.status, detail.slice(0, 200));
+      console.error(`[nvidia/${label}] HTTP`, res.status, detail.slice(0, 200));
       throw new Error(
-        `NVIDIA FLUX erreur HTTP ${res.status}${detail ? `: ${detail}` : ""}`,
+        `NVIDIA FLUX (${kind}) erreur HTTP ${res.status}${detail ? `: ${detail}` : ""}`,
       );
     }
 
@@ -247,17 +306,147 @@ export async function generateFluxImage(
     }
     const mimeType = fromDataUrl || guessMimeFromBytes(bytes);
 
-    console.info("[nvidia/flux] ok", {
+    console.info(`[nvidia/${label}] ok`, {
       ms: Date.now() - started,
       bytes: bytes.length,
       mimeType,
     });
 
-    return { bytes, base64, mimeType, provider: "nvidia-flux" };
+    return { bytes, base64, mimeType, provider };
   } catch (err) {
     if (isAbortError(err)) {
       throw new Error(
-        `Délai dépassé : la génération FLUX n'a pas répondu à temps (${Math.round(timeoutMs / 1000)} s).`,
+        `Délai dépassé : la génération FLUX (${kind}) n'a pas répondu à temps (${Math.round(timeoutMs / 1000)} s).`,
+      );
+    }
+    throw err;
+  } finally {
+    cleanup();
+  }
+}
+
+/** Primary: NVIDIA Build FLUX.1-dev. */
+export async function generateFluxDevImage(
+  prompt: string,
+  opts: FluxGenerateOptions = {},
+): Promise<FluxGenerateResult> {
+  return generateNvidiaFluxImage(FLUX_DEV_URL, prompt, {
+    ...opts,
+    kind: "dev",
+    provider: "nvidia-flux-dev",
+    // Prefer model defaults unless caller explicitly set steps for dev.
+    steps: opts.steps != null && opts.steps >= 5 ? opts.steps : 28,
+    timeoutMs: opts.timeoutMs ?? FLUX_FETCH_TIMEOUT_MS,
+  });
+}
+
+/** Secondary: NVIDIA Build FLUX.1-schnell. */
+export async function generateFluxSchnellImage(
+  prompt: string,
+  opts: FluxGenerateOptions = {},
+): Promise<FluxGenerateResult> {
+  return generateNvidiaFluxImage(FLUX_SCHNELL_URL, prompt, {
+    ...opts,
+    kind: "schnell",
+    provider: "nvidia-flux",
+    steps: 4,
+    timeoutMs: opts.timeoutMs ?? FLUX_SCHNELL_TIMEOUT_MS,
+  });
+}
+
+/**
+ * Alias → FLUX.1-dev (primary). Kept for callers that still import generateFluxImage.
+ */
+export async function generateFluxImage(
+  prompt: string,
+  opts: FluxGenerateOptions = {},
+): Promise<FluxGenerateResult> {
+  return generateFluxDevImage(prompt, opts);
+}
+
+/**
+ * Optional Qwen-Image via OpenAI-compatible Integrate API.
+ * Expect 404 on free hosted tier — callers should catch and continue.
+ */
+export async function generateQwenImage(
+  prompt: string,
+  opts: FluxGenerateOptions & { model?: string } = {},
+): Promise<FluxGenerateResult> {
+  const trimmed = prompt.trim();
+  if (!trimmed) throw new Error("Le prompt est vide.");
+
+  const model = opts.model ?? getConfiguredQwenModel();
+  if (!model) {
+    throw new Error(
+      'IMAGE_MODEL doit être "qwen/qwen-image" ou "qwen/qwen-image-2512".',
+    );
+  }
+
+  const timeoutMs = opts.timeoutMs ?? 30_000;
+  const { signal, cleanup } = mergeSignals(opts.signal, timeoutMs);
+  const started = Date.now();
+
+  console.info("[nvidia/qwen] POST", NVIDIA_IMAGES_URL, {
+    model,
+    promptLen: trimmed.length,
+    timeoutMs,
+  });
+
+  try {
+    const res = await fetch(NVIDIA_IMAGES_URL, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${getNvidiaApiKey()}`,
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model,
+        prompt: trimmed,
+        n: 1,
+        response_format: "b64_json",
+      }),
+      signal,
+    });
+
+    const text = await res.text();
+    let json: unknown = null;
+    try {
+      json = text ? JSON.parse(text) : null;
+    } catch {
+      // keep raw
+    }
+
+    if (!res.ok) {
+      const detail =
+        json && typeof json === "object"
+          ? JSON.stringify(json).slice(0, 500)
+          : text.slice(0, 500);
+      console.error("[nvidia/qwen] HTTP", res.status, detail.slice(0, 200));
+      throw new Error(
+        `NVIDIA Qwen erreur HTTP ${res.status}${detail ? `: ${detail}` : ""}`,
+      );
+    }
+
+    const rawB64 = extractFluxBase64(json);
+    const { base64, mimeType: fromDataUrl } = stripDataUrl(rawB64);
+    const bytes = Buffer.from(base64, "base64");
+    if (bytes.length < 32) {
+      throw new Error("Image Qwen trop courte — réponse NVIDIA suspecte.");
+    }
+    const mimeType = fromDataUrl || guessMimeFromBytes(bytes);
+
+    console.info("[nvidia/qwen] ok", {
+      ms: Date.now() - started,
+      bytes: bytes.length,
+      mimeType,
+    });
+
+    return { bytes, base64, mimeType, provider: "nvidia-qwen" };
+  } catch (err) {
+    if (isAbortError(err)) {
+      throw new Error(
+        `Délai dépassé : Qwen-Image n'a pas répondu à temps (${Math.round(timeoutMs / 1000)} s).`,
       );
     }
     throw err;
@@ -367,7 +556,7 @@ export async function generatePollinationsImage(
 }
 
 /**
- * Prefer NVIDIA FLUX when key present; always fall back to Pollinations.
+ * Cover chain: optional Qwen (if IMAGE_MODEL) → FLUX.1-dev → FLUX.1-schnell → Pollinations.
  */
 export async function generateCoverImage(
   prompt: string,
@@ -375,18 +564,48 @@ export async function generateCoverImage(
 ): Promise<FluxGenerateResult> {
   const width = opts.width ?? FLUX_DEFAULT_SIZE;
   const height = opts.height ?? FLUX_DEFAULT_SIZE;
+  const shared = { width, height, seed: opts.seed, signal: opts.signal };
 
   if (hasNvidiaApiKey()) {
+    const qwenModel = getConfiguredQwenModel();
+    if (qwenModel) {
+      try {
+        return await generateQwenImage(prompt, {
+          ...shared,
+          model: qwenModel,
+          timeoutMs: 30_000,
+        });
+      } catch (err) {
+        console.warn(
+          "[cover] NVIDIA Qwen failed (often 404 on free tier), continuing:",
+          err instanceof Error ? err.message : err,
+        );
+      }
+    }
+
     try {
-      return await generateFluxImage(prompt, {
-        ...opts,
-        width,
-        height,
+      return await generateFluxDevImage(prompt, {
+        ...shared,
+        cfg_scale: opts.cfg_scale,
+        // Ignore legacy steps:4 from callers — flux-dev defaults to 28.
+        steps: opts.steps != null && opts.steps >= 5 ? opts.steps : 28,
         timeoutMs: opts.timeoutMs ?? FLUX_FETCH_TIMEOUT_MS,
       });
     } catch (err) {
       console.warn(
-        "[cover] NVIDIA FLUX failed, falling back to Pollinations:",
+        "[cover] NVIDIA FLUX.1-dev failed, trying FLUX.1-schnell:",
+        err instanceof Error ? err.message : err,
+      );
+    }
+
+    try {
+      return await generateFluxSchnellImage(prompt, {
+        ...shared,
+        timeoutMs: FLUX_SCHNELL_TIMEOUT_MS,
+      });
+    } catch (err) {
+      console.warn(
+        "[cover] NVIDIA FLUX.1-schnell failed, falling back to Pollinations:",
         err instanceof Error ? err.message : err,
       );
     }

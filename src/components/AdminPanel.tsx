@@ -502,9 +502,13 @@ export function AdminPanel({
         const providerLabel =
           data.provider === "pollinations"
             ? "Pollinations"
-            : data.provider === "nvidia-flux"
-              ? "NVIDIA FLUX"
-              : "IA";
+            : data.provider === "nvidia-flux-dev"
+              ? "NVIDIA FLUX.1-dev"
+              : data.provider === "nvidia-flux"
+                ? "NVIDIA FLUX.1-schnell"
+                : data.provider === "nvidia-qwen"
+                  ? "NVIDIA Qwen-Image"
+                  : "IA";
         setModeNote(
           `Couverture générée via ${providerLabel} — vérifiez l'aperçu avant d'enregistrer.`,
         );
@@ -893,7 +897,7 @@ export function AdminPanel({
                       !draft.rubric
                     }
                     className="inline-flex items-center gap-2 text-xs font-semibold border border-fernent-red bg-fernent-red text-white px-3 py-1.5 hover:bg-fernent-red-deep disabled:opacity-50 disabled:cursor-not-allowed"
-                    title="Requiert titre, extrait et rubrique — génère une couverture IA (FLUX ou repli)"
+                    title="Requiert titre, extrait et rubrique — génère une couverture IA (FLUX.1-dev ou repli)"
                   >
                     {generatingCover ? "Génération…" : "Générer une couverture IA"}
                   </button>
