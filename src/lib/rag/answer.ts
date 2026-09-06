@@ -53,7 +53,7 @@ export async function answerWithRag(
         "Question du lecteur :",
         question,
         "",
-        "Réponds en français en t'appuyant uniquement sur le contexte. Si insuffisant, dis-le.",
+        "Réponds en français en t'appuyant uniquement sur le contexte. Si insuffisant, dis-le. Utilise un Markdown léger (**gras**, *italique*, listes) — pas d'HTML.",
       ].join("\n"),
     },
   ];

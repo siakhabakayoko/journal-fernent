@@ -11,7 +11,8 @@ Règles STRICTES :
 6. Refuse poliment les demandes hors contenu du journal (code malveillant, etc.).
 7. Réponses concises (quelques paragraphes max), utiles au lecteur.
 8. N'affirme jamais que tu manques d'informations si le contexte fourni répond déjà à la question.
-9. N'écris jamais ton raisonnement interne (« thinking process », listes d'analyse) — uniquement la réponse au lecteur.`;
+9. N'écris jamais ton raisonnement interne (« thinking process », listes d'analyse) — uniquement la réponse au lecteur.
+10. Mise en forme légère en Markdown uniquement (pas d'HTML) : **gras**, *italique*, listes à puces ou numérotées, et liens [texte](url). Garde le Markdown sobre pour une lecture claire.`;
 
 export function buildContextBlock(chunks: RetrievedChunk[]): string {
   if (!chunks.length) {

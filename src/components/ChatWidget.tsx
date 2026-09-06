@@ -13,6 +13,8 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import type { RagSource } from "@/lib/rag/types";
 import { LoadingDots } from "@/components/LoadingDots";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 type UiMessage = {
   id: string;
@@ -317,7 +319,30 @@ export function ChatWidget() {
                       : "border border-rule bg-paper-elevated text-ink"
                   }`}
                 >
-                  <p className="whitespace-pre-wrap break-words">{m.content}</p>
+                  {m.role === "assistant" ? (
+                    <div className="chat-md break-words text-sm leading-relaxed [&_p]:mb-2 [&_p:last-child]:mb-0 [&_ul]:my-2 [&_ul]:list-disc [&_ul]:space-y-1 [&_ul]:pl-5 [&_ol]:my-2 [&_ol]:list-decimal [&_ol]:space-y-1 [&_ol]:pl-5 [&_li]:leading-relaxed [&_strong]:font-semibold [&_em]:italic [&_a]:text-fernent-red [&_a]:underline [&_a]:underline-offset-2 [&_a]:decoration-fernent-red/60 hover:[&_a]:decoration-fernent-red [&_br]:block">
+                      <ReactMarkdown
+                        remarkPlugins={[remarkGfm]}
+                        components={{
+                          a: ({ href, children, ...props }) => (
+                            <a
+                              href={href}
+                              target={href?.startsWith("http") ? "_blank" : undefined}
+                              rel={href?.startsWith("http") ? "noopener noreferrer" : undefined}
+                              {...props}
+                            >
+                              {children}
+                            </a>
+                          ),
+                          p: ({ children }) => <p className="whitespace-pre-wrap">{children}</p>,
+                        }}
+                      >
+                        {m.content}
+                      </ReactMarkdown>
+                    </div>
+                  ) : (
+                    <p className="whitespace-pre-wrap break-words">{m.content}</p>
+                  )}
                   {m.sources && m.sources.length > 0 && (
                     <ul className="mt-2 space-y-1 border-t border-rule/80 pt-2 text-[11px]">
                       {m.sources.map((s) => (
