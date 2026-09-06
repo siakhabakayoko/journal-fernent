@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ArticleCard } from "@/components/ArticleCard";
 import { AboutNotreJournal } from "@/components/AboutNotreJournal";
+import { NotreHistoire } from "@/components/NotreHistoire";
 import { IssueCards } from "@/components/IssueCards";
 import { VideoCard } from "@/components/CapsulesClient";
 import { NewsletterForm } from "@/components/NewsletterForm";
@@ -116,13 +117,7 @@ export function HomeSections({
           </div>
 
           <div className="border-t border-rule pt-8">
-            <p className="kicker text-fernent-red mb-2">{t.home.notreHistoire}</p>
-            <h3 className="font-serif text-xl font-bold tracking-tight">
-              {t.home.notreHistoire}
-            </h3>
-            <p className="mt-3 text-sm sm:text-base text-muted italic leading-relaxed">
-              {t.home.notreHistoirePlaceholder}
-            </p>
+            <NotreHistoire />
           </div>
         </div>
       </section>

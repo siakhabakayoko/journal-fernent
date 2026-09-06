@@ -45,8 +45,56 @@ export const dictionaries = {
       notreJournal: "Notre journal",
       notreJournalTitle: "Ce que veut dire Ferñent",
       notreHistoire: "Notre histoire",
-      notreHistoirePlaceholder:
-        "Bientôt — contenus et photos à venir.",
+    },
+    histoire: {
+      kicker: "Ferñent / L'Étincelle",
+      title: "Notre histoire",
+      subtitle:
+        "Le parcours d'un journal engagé au service des peuples d'Afrique et de la solidarité internationale.",
+      missionTitle: "Notre mission",
+      missionParagraphs: [
+        "Ferñent est un journal édité par des militants de gauche qui veulent en faire un instrument au service du développement de l'organisation du mouvement ouvrier et populaire, un vecteur des luttes des ouvriers, paysans, femmes, jeunes, etc. et des débats qui animent le mouvement ouvrier et populaire. Ses colonnes sont donc ouvertes à tous ceux et toutes celles dont le souci est le développement et l'organisation du mouvement ouvrier et populaire.",
+        "Ferñent se veut une tribune pour tous ceux et toutes celles qui sont victimes de l'oppression impérialiste, de la misère, des injustices, de l'arbitraire policier du régime, pour dresser le réquisitoire systématique de la politique qui est responsable de tous ces maux. Il révèle ce que l'autre presse redoute de dire, pour forger une conscience politique révolutionnaire des militant(e)s du mouvement ouvrier et populaire.",
+        "Ferñent n'est pas un observateur passif des événements, mais un participant actif de toutes les perspectives et contribue à leur développement. Il particularise cependant le mouvement ouvrier dont il fait le pivot de son action.",
+      ],
+      motto:
+        "« Union libre des peuples libres d'Afrique. Solidarité internationaliste des travailleurs. »",
+      principlesTitle: "Nos principes",
+      principles: [
+        {
+          title: "Mouvement ouvrier et populaire",
+          body: "Ferñent est un instrument au service du développement de l'organisation du mouvement ouvrier et populaire, un vecteur des luttes des ouvriers, paysans, femmes, jeunes.",
+        },
+        {
+          title: "Libération nationale",
+          body: "Ferñent soutient les luttes de libération nationale et les luttes de la classe ouvrière dans les pays impérialistes. Il soutient tout particulièrement les luttes de libération nationale des peuples gambien et casamançais.",
+        },
+        {
+          title: "Émancipation des femmes",
+          body: "Ferñent a comme trait distinctif l'importance qu'il accorde à la lutte contre l'oppression spécifique des femmes, pour leur émancipation et leur participation active à la lutte de leur peuple.",
+        },
+        {
+          title: "Solidarité internationaliste",
+          body: "Ferñent se fait devoir internationaliste de contribuer au développement des luttes dans une perspective national-révolutionnaire.",
+        },
+      ],
+      cofoundersTitle: "Les cofondateurs",
+      cofoundersIntro:
+        "Hommage à Assane Samb et Birane Gaye, cofondateurs du Journal Ferñent, dont l'engagement et la vision ont permis la naissance de cette publication militante.",
+      assaneName: "Assane Samb",
+      biraneName: "Birane Gaye",
+      cofounderRole: "Cofondateur de Ferñent",
+      cofoundersLegacy:
+        "Militants engagés dans les luttes pour la libération des peuples d'Afrique, ils ont posé les fondations de ce journal au service du mouvement ouvrier et populaire. Leur vision d'un journal militant, tribune des opprimés et instrument de conscientisation politique, guide encore aujourd'hui chaque édition de Ferñent.",
+      teamTitle: "L'équipe actuelle",
+      dfrInitials: "DFR",
+      dfrName: "Diagne Fodé Roland",
+      dfrRole: "Fondateur & Directeur de publication",
+      dfrBio:
+        "Militant panafricaniste et analyste politique engagé dans les luttes pour la souveraineté des peuples d'Afrique. Fondateur du Journal Ferñent, il consacre son travail à l'information indépendante et à la défense des intérêts des travailleurs et des peuples opprimés.",
+      heritage:
+        "En mémoire de leur combat — l'héritage continue. Leur vision d'un journal militant guide encore chaque édition.",
+      contactLabel: "Pour toute question, collaboration ou contribution :",
     },
     article: {
       comments: "Commentaires",
@@ -231,8 +279,55 @@ export const dictionaries = {
       notreJournal: "Sunu journal",
       notreJournalTitle: "Lan la Ferñent tekki",
       notreHistoire: "Sunu jaar-jaar",
-      notreHistoirePlaceholder:
-        "Dina ñëw — mbind ak nataal.",
+    },
+    histoire: {
+      kicker: "Ferñent / L'Étincelle",
+      title: "Sunu jaar-jaar",
+      subtitle:
+        "Jaar-jaaru journal bu xeex ngir askan yi Afrig ak solidarite bu àdduna.",
+      missionTitle: "Sunu yëngu-yëngu",
+      missionParagraphs: [
+        "Ferñent ab journal la bu ay militant bu camm-gauche defoon ngir mu doon jumtukaay ci yëngu-yëngu ak organisationu mouvement ouvrier ak populaire.",
+        "Ferñent dafa bëgg doon tribune ngir ñépp ñu oppression imperialiste, miskiñte ak injustices jot. Dafa feeñal li presse bu bari ragal wax.",
+        "Ferñent du seetlu rekk: dafa bokk ci xeex yi, te movement ouvrier mooy diggu am jëf.",
+      ],
+      motto:
+        "« Union libre des peuples libres d'Afrique. Solidarité internationaliste des travailleurs. »",
+      principlesTitle: "Sunu principes",
+      principles: [
+        {
+          title: "Mouvement ouvrier ak populaire",
+          body: "Ferñent jumtukaay la ngir organisationu movement ouvrier ak populaire — xeexu liggéeykat, baykat, jigéen, ndaw.",
+        },
+        {
+          title: "Liberation nationale",
+          body: "Ferñent dafa taxaw ci xeexu liberation nationale, rawatina askan yu Gambie ak Casamance.",
+        },
+        {
+          title: "Jigéen ñi ñu yamale",
+          body: "Ferñent dafa jox solo lu bari xeex bi ngir jigéen ñu génn oppression bu leen jagleel.",
+        },
+        {
+          title: "Solidarité internationaliste",
+          body: "Ferñent am na warugar internationaliste ngir jàppale xeex yi ci perspective national-révolutionnaire.",
+        },
+      ],
+      cofoundersTitle: "Ñi door",
+      cofoundersIntro:
+        "Teral Assane Samb ak Birane Gaye, ñi door Journal Ferñent.",
+      assaneName: "Assane Samb",
+      biraneName: "Birane Gaye",
+      cofounderRole: "Ki door Ferñent",
+      cofoundersLegacy:
+        "Seen xeex ak seen vision mooy gindi tey jukki yu Ferñent.",
+      teamTitle: "Équipe bi tey",
+      dfrInitials: "DFR",
+      dfrName: "Diagne Fodé Roland",
+      dfrRole: "Fondateur & Directeur de publication",
+      dfrBio:
+        "Militant panafricaniste ak analyste politique. Fondateur du Journal Ferñent — xëcc xibaar bu libre ak xeexu liggéeykat yi.",
+      heritage: "Seen xeex a ngi doxati — héritage bi a ngi wéy.",
+      contactLabel: "Ngir laaj, jëfandikoo walla contribution:",
     },
     article: {
       comments: "Kàddu yi",

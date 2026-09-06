@@ -144,53 +144,84 @@ export async function ensureSchema(): Promise<void> {
   await schemaReady;
 }
 
-/** Import seed JSON into empty Turso tables (once). */
+/** Sync seed JSON into Turso (articles: full replace; other tables: empty-only). */
 export async function ensureSeeded(): Promise<void> {
   if (!isTursoConfigured()) return;
   await ensureSchema();
   if (!seedReady) {
     seedReady = (async () => {
       const db = getTursoClient();
-      const count = await db.execute("SELECT COUNT(*) AS n FROM articles");
-      const n = Number(count.rows[0]?.n ?? 0);
-      if (n === 0) {
-        const { default: articles } = await import("../../content/articles.json");
+
+      // Full replace sync of articles from content/articles.json (upsert + prune).
+      const { default: articles } = await import("../../content/articles.json");
+      type SeedArticle = {
+        id: string;
+        slug: string;
+        title: string;
+        excerpt: string;
+        body: string;
+        rubric: string;
+        author: string;
+        publishedAt: string;
+        featured: boolean;
+        commentsEnabled: boolean;
+        coverImage?: string;
+      };
+      const seedArticles = articles as SeedArticle[];
+      const seedIds = new Set(seedArticles.map((a) => a.id));
+
+      for (const a of seedArticles) {
+        await db.execute({
+          sql: `INSERT INTO articles
+            (id, slug, title, excerpt, body, rubric, author, published_at, featured, comments_enabled, cover_image)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(id) DO UPDATE SET
+              slug = excluded.slug,
+              title = excluded.title,
+              excerpt = excluded.excerpt,
+              body = excluded.body,
+              rubric = excluded.rubric,
+              author = excluded.author,
+              published_at = excluded.published_at,
+              featured = excluded.featured,
+              comments_enabled = excluded.comments_enabled,
+              cover_image = excluded.cover_image`,
+          args: [
+            a.id,
+            a.slug,
+            a.title,
+            a.excerpt,
+            a.body,
+            a.rubric,
+            a.author,
+            a.publishedAt,
+            a.featured ? 1 : 0,
+            a.commentsEnabled !== false ? 1 : 0,
+            a.coverImage ?? null,
+          ],
+        });
+      }
+
+      // Drop retired prototype / "Notre journal" rows if they are not in the seed set.
+      // Do not prune unknown admin-created ids.
+      const retiredIds = [
+        "a1", "a2", "a3", "a4", "a5", "a6", "a7", "a8", "a9", "a10",
+      ];
+      for (const id of retiredIds) {
+        if (seedIds.has(id)) continue;
+        await db.execute({
+          sql: "DELETE FROM articles WHERE id = ?",
+          args: [id],
+        });
+        await db.execute({
+          sql: "DELETE FROM comments WHERE article_id = ?",
+          args: [id],
+        });
+      }
+
+      const commentCount = await db.execute("SELECT COUNT(*) AS n FROM comments");
+      if (Number(commentCount.rows[0]?.n ?? 0) === 0) {
         const { default: comments } = await import("../../content/comments.json");
-        const { default: newsletter } = await import("../../content/newsletter.json");
-
-        for (const a of articles as Array<{
-          id: string;
-          slug: string;
-          title: string;
-          excerpt: string;
-          body: string;
-          rubric: string;
-          author: string;
-          publishedAt: string;
-          featured: boolean;
-          commentsEnabled: boolean;
-          coverImage?: string;
-        }>) {
-          await db.execute({
-            sql: `INSERT OR IGNORE INTO articles
-              (id, slug, title, excerpt, body, rubric, author, published_at, featured, comments_enabled, cover_image)
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            args: [
-              a.id,
-              a.slug,
-              a.title,
-              a.excerpt,
-              a.body,
-              a.rubric,
-              a.author,
-              a.publishedAt,
-              a.featured ? 1 : 0,
-              a.commentsEnabled !== false ? 1 : 0,
-              a.coverImage ?? null,
-            ],
-          });
-        }
-
         for (const c of comments as Array<{
           id: string;
           articleId: string;
@@ -205,7 +236,15 @@ export async function ensureSeeded(): Promise<void> {
             args: [c.id, c.articleId, c.author, c.body, c.createdAt],
           });
         }
+      }
 
+      const newsletterCount = await db.execute(
+        "SELECT COUNT(*) AS n FROM newsletter",
+      );
+      if (Number(newsletterCount.rows[0]?.n ?? 0) === 0) {
+        const { default: newsletter } = await import(
+          "../../content/newsletter.json"
+        );
         for (const e of newsletter as Array<{
           id?: string;
           email: string;

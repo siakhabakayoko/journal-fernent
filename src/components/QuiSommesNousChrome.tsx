@@ -1,5 +1,6 @@
 "use client";
 
+import { NotreHistoire } from "@/components/NotreHistoire";
 import { useLanguage } from "@/lib/i18n/LanguageProvider";
 
 export function QuiSommesNousChrome({
@@ -10,17 +11,7 @@ export function QuiSommesNousChrome({
   const { t } = useLanguage();
 
   if (section === "histoire") {
-    return (
-      <>
-        <p className="kicker text-fernent-red mb-2">{t.home.notreHistoire}</p>
-        <h2 className="font-serif text-xl font-bold tracking-tight">
-          {t.home.notreHistoire}
-        </h2>
-        <p className="mt-3 text-sm sm:text-base text-muted italic leading-relaxed">
-          {t.home.notreHistoirePlaceholder}
-        </p>
-      </>
-    );
+    return <NotreHistoire />;
   }
 
   return (
