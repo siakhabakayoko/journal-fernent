@@ -4,6 +4,8 @@ import { getRecentArticles } from "@/lib/articles";
 import { getIssues } from "@/lib/issues";
 import { getVideos } from "@/lib/videos";
 
+export const dynamic = "force-dynamic";
+
 export default async function HomePage() {
   const [recent, videos, issues] = await Promise.all([
     getRecentArticles(12),

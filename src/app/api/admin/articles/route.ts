@@ -1,4 +1,5 @@
 import { createHash } from "crypto";
+import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { put } from "@vercel/blob";
 import { isAdminAuthenticated } from "@/lib/auth";
@@ -58,6 +59,13 @@ async function storeArticleAudio(
     allowOverwrite: true,
   });
   return result.url;
+}
+
+
+function revalidateArticlePages(slug?: string) {
+  revalidatePath("/");
+  revalidatePath("/breves");
+  if (slug) revalidatePath(`/article/${slug}`);
 }
 
 export async function GET() {
@@ -181,6 +189,12 @@ export async function POST(request: Request) {
     }
   }
 
+  // Bust ISR / static caches so public pages show the new coverImage immediately.
+  revalidateArticlePages(article.slug);
+  if (existing?.slug && existing.slug !== article.slug) {
+    revalidateArticlePages(existing.slug);
+  }
+
   if (isCreate) {
     void notifySubscribers({
       kind: "article",
@@ -207,6 +221,7 @@ export async function DELETE(request: Request) {
   const { searchParams } = new URL(request.url);
   const id = searchParams.get("id");
   if (!id) return NextResponse.json({ error: "invalid" }, { status: 400 });
+  const existing = (await getArticles()).find((a) => a.id === id);
   let result;
   try {
     result = await deleteArticle(id);
@@ -219,5 +234,6 @@ export async function DELETE(request: Request) {
     );
   }
   if (!result.ok) return NextResponse.json({ error: "not_found" }, { status: 404 });
+  revalidateArticlePages(existing?.slug);
   return NextResponse.json(result);
 }

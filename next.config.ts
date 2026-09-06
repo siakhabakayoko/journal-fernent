@@ -3,7 +3,18 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
-      { protocol: "https", hostname: "**.public.blob.vercel-storage.com" },
+      // Exact Vercel Blob store used by Ferñent (covers / audio).
+      {
+        protocol: "https",
+        hostname: "bfpfaox9ur5poupw.public.blob.vercel-storage.com",
+        pathname: "/**",
+      },
+      // Allow other store IDs on the same Blob platform if the store rotates.
+      {
+        protocol: "https",
+        hostname: "*.public.blob.vercel-storage.com",
+        pathname: "/**",
+      },
       { protocol: "https", hostname: "images.unsplash.com" },
       { protocol: "https", hostname: "picsum.photos" },
       { protocol: "https", hostname: "i.ytimg.com" },

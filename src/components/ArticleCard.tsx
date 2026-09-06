@@ -38,7 +38,11 @@ function Cover({
       className={className ?? "object-cover"}
       sizes={sizes ?? "(max-width: 768px) 100vw, 50vw"}
       priority={priority}
-      unoptimized={src.endsWith(".svg") || src.includes("pollinations.ai")}
+      unoptimized={
+        src.endsWith(".svg") ||
+        src.includes("pollinations.ai") ||
+        src.includes("blob.vercel-storage.com")
+      }
     />
   );
 }
@@ -107,7 +111,9 @@ export function ArticleCard({
           aria-hidden
         />
         <div className="absolute inset-x-0 bottom-0 z-10 p-4 sm:p-5">
-          <span className="kicker !text-fernent-red drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)]">{rubricLabel}</span>
+          <span className="inline-flex items-center rounded-sm bg-black/70 px-2 py-0.5 text-[0.65rem] font-bold uppercase tracking-[0.14em] text-white backdrop-blur-[2px] shadow-sm">
+            {rubricLabel}
+          </span>
           <h2
             className={`mt-2 font-serif font-bold text-white leading-snug ${
               isFeatured

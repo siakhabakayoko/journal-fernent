@@ -1,6 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+} from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import type { RagSource } from "@/lib/rag/types";
@@ -17,6 +25,9 @@ type UiMessage = {
 const WELCOME =
   "Bonjour — je suis l'assistant Ferñent. Posez une question sur nos articles, le mensuel, les capsules ou qui nous sommes. Je ne réponds qu'à partir du contenu du journal.";
 
+const VV_GAP = 12;
+const LAUNCHER_CLEARANCE = 72;
+
 function typeLabel(t: RagSource["type"]): string {
   switch (t) {
     case "article":
@@ -32,6 +43,50 @@ function typeLabel(t: RagSource["type"]): string {
   }
 }
 
+type ViewportBox = {
+  offsetTop: number;
+  offsetLeft: number;
+  width: number;
+  height: number;
+  /** Keyboard (or browser chrome) covering the bottom of the layout viewport. */
+  bottomInset: number;
+  layoutWidth: number;
+};
+
+function readVisualViewport(): ViewportBox {
+  if (typeof window === "undefined") {
+    return {
+      offsetTop: 0,
+      offsetLeft: 0,
+      width: 390,
+      height: 700,
+      bottomInset: 0,
+      layoutWidth: 390,
+    };
+  }
+  const layoutW = window.innerWidth;
+  const layoutH = window.innerHeight;
+  const vv = window.visualViewport;
+  if (vv) {
+    return {
+      offsetTop: vv.offsetTop,
+      offsetLeft: vv.offsetLeft,
+      width: vv.width,
+      height: vv.height,
+      bottomInset: Math.max(0, layoutH - vv.height - vv.offsetTop),
+      layoutWidth: layoutW,
+    };
+  }
+  return {
+    offsetTop: 0,
+    offsetLeft: 0,
+    width: layoutW,
+    height: layoutH,
+    bottomInset: 0,
+    layoutWidth: layoutW,
+  };
+}
+
 export function ChatWidget() {
   const pathname = usePathname();
   const panelId = useId();
@@ -42,6 +97,7 @@ export function ChatWidget() {
   const [messages, setMessages] = useState<UiMessage[]>([
     { id: "welcome", role: "assistant", content: WELCOME },
   ]);
+  const [vv, setVv] = useState<ViewportBox>(() => readVisualViewport());
   const listRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -49,12 +105,51 @@ export function ChatWidget() {
 
   useEffect(() => {
     if (!open) return;
+    const update = () => setVv(readVisualViewport());
+    update();
+    const vvApi = window.visualViewport;
+    vvApi?.addEventListener("resize", update);
+    vvApi?.addEventListener("scroll", update);
+    window.addEventListener("resize", update);
+    return () => {
+      vvApi?.removeEventListener("resize", update);
+      vvApi?.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const prevOverflow = document.body.style.overflow;
+    const prevTouch = document.body.style.touchAction;
+    document.body.style.overflow = "hidden";
+    document.body.style.touchAction = "none";
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      document.body.style.touchAction = prevTouch;
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
     const el = listRef.current;
     if (el) el.scrollTop = el.scrollHeight;
   }, [messages, open, busy]);
 
-  useEffect(() => {
-    if (open) inputRef.current?.focus();
+  useLayoutEffect(() => {
+    if (!open) return;
+    const el = inputRef.current;
+    if (!el) return;
+    try {
+      el.focus({ preventScroll: true });
+    } catch {
+      el.focus();
+    }
+    const t = window.setTimeout(() => {
+      setVv(readVisualViewport());
+      el.scrollIntoView({ block: "nearest", inline: "nearest" });
+    }, 50);
+    return () => window.clearTimeout(t);
   }, [open]);
 
   const send = useCallback(async () => {
@@ -119,12 +214,43 @@ export function ChatWidget() {
 
   if (hidden) return null;
 
+  const keyboardOpen = vv.bottomInset > 40;
+  const panelMaxW = Math.min(380, Math.max(240, vv.width - VV_GAP * 2));
+  const bottomPad = keyboardOpen ? VV_GAP : LAUNCHER_CLEARANCE;
+  const panelH = Math.min(560, Math.max(220, vv.height - bottomPad - VV_GAP));
+  const panelTop =
+    vv.offsetTop + Math.max(VV_GAP, vv.height - panelH - bottomPad);
+  const panelRight = Math.max(
+    VV_GAP,
+    vv.layoutWidth - (vv.offsetLeft + vv.width) + VV_GAP,
+  );
+
+  const panelStyle: CSSProperties = {
+    position: "fixed",
+    top: panelTop,
+    right: panelRight,
+    left: "auto",
+    bottom: "auto",
+    width: panelMaxW,
+    height: panelH,
+    maxHeight: panelH,
+    zIndex: 60,
+  };
+
+  const launcherHidden = vv.bottomInset > vv.height * 0.35;
+  const launcherStyle: CSSProperties = {
+    right: Math.max(16, vv.layoutWidth - (vv.offsetLeft + vv.width) + 16),
+    bottom: keyboardOpen ? vv.bottomInset + 12 : 16,
+    opacity: launcherHidden ? 0 : 1,
+    pointerEvents: launcherHidden ? "none" : "auto",
+  };
+
   return (
     <>
-      {/* Launcher — independent fixed control; does not share layout with panel */}
       <button
         type="button"
-        className="pointer-events-auto fixed z-[60] inline-flex h-14 items-center gap-2 rounded-full bg-fernent-red px-4 text-sm font-semibold text-white shadow-[0_8px_24px_rgba(225,6,0,0.35)] hover:bg-fernent-red-deep focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fernent-red right-[max(1rem,env(safe-area-inset-right,0px))] bottom-[max(1rem,env(safe-area-inset-bottom,0px))] sm:right-[max(1.5rem,env(safe-area-inset-right,0px))] sm:bottom-[max(1.5rem,env(safe-area-inset-bottom,0px))]"
+        className="pointer-events-auto fixed z-[60] inline-flex h-14 items-center gap-2 rounded-full bg-fernent-red px-4 text-sm font-semibold text-white shadow-[0_8px_24px_rgba(225,6,0,0.35)] hover:bg-fernent-red-deep focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fernent-red"
+        style={launcherStyle}
         aria-expanded={open}
         aria-controls={open ? panelId : undefined}
         onClick={() => setOpen((v) => !v)}
@@ -141,10 +267,10 @@ export function ChatWidget() {
           id={panelId}
           role="dialog"
           aria-label="Assistant Ferñent"
-          className="pointer-events-auto fixed z-[60] box-border flex flex-col overflow-hidden rounded-2xl border border-rule bg-paper-elevated shadow-[0_12px_40px_rgba(20,17,15,0.18)] left-[max(1rem,env(safe-area-inset-left,0px))] right-[max(1rem,env(safe-area-inset-right,0px))] bottom-[calc(4.5rem+max(1rem,env(safe-area-inset-bottom,0px)))] ml-auto w-[min(calc(100vw-2rem),380px)] max-w-[calc(100vw-2rem)] h-[min(560px,calc(100dvh-5.5rem-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px)),calc(100svh-5.5rem-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px)))] max-h-[min(560px,calc(100dvh-5.5rem-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px)),calc(100svh-5.5rem-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px)))]"
+          style={panelStyle}
+          className="pointer-events-auto box-border flex flex-col overflow-hidden rounded-2xl border border-rule bg-paper-elevated shadow-[0_12px_40px_rgba(20,17,15,0.18)]"
         >
           <header className="flex shrink-0 items-center gap-3 border-b border-rule bg-fernent-red px-4 py-3 text-white">
-            {/* Site favicon — same asset as layout metadata icons.icon */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/favicon.ico"
@@ -243,6 +369,9 @@ export function ChatWidget() {
                 rows={2}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
+                onFocus={() => {
+                  window.setTimeout(() => setVv(readVisualViewport()), 100);
+                }}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();

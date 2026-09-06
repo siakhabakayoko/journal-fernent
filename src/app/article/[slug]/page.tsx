@@ -1,17 +1,15 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { getArticleBySlug, getArticles, getArticlesByRubric } from "@/lib/articles";
+import { getArticleBySlug, getArticlesByRubric } from "@/lib/articles";
 import { Comments } from "@/components/Comments";
 import { ArticleChrome } from "@/components/ArticleChrome";
 import { ArticleCard } from "@/components/ArticleCard";
 
-type Props = { params: Promise<{ slug: string }> };
+/** Always read coverImage (and body) from Turso — admin edits must not hit a stale static page. */
+export const dynamic = "force-dynamic";
 
-export async function generateStaticParams() {
-  const articles = await getArticles();
-  return articles.map((a) => ({ slug: a.slug }));
-}
+type Props = { params: Promise<{ slug: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;

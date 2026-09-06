@@ -26,7 +26,11 @@ export function ArticleChrome({ article }: { article: Article }) {
             className="object-cover"
             sizes="(max-width: 768px) 100vw, 768px"
             priority
-            unoptimized={cover.endsWith(".svg") || cover.includes("pollinations.ai")}
+            unoptimized={
+              cover.endsWith(".svg") ||
+              cover.includes("pollinations.ai") ||
+              cover.includes("blob.vercel-storage.com")
+            }
           />
         </div>
       )}

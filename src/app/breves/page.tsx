@@ -4,6 +4,8 @@ import { BrevesChrome } from "@/components/BrevesChrome";
 import { BrevesClient } from "@/components/BrevesClient";
 import { getArticles } from "@/lib/articles";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Brèves",
   description: "Articles et analyses — Journal Ferñent",
