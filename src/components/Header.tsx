@@ -29,6 +29,28 @@ function MastheadDate() {
   );
 }
 
+function MastheadPortrait({
+  src,
+  alt,
+}: {
+  src: string;
+  alt: string;
+}) {
+  return (
+    <div className="relative shrink-0 overflow-visible h-14 w-14 sm:h-20 sm:w-20">
+      <Image
+        src={src}
+        alt={alt}
+        width={160}
+        height={160}
+        className="h-14 w-14 sm:h-20 sm:w-20 object-contain drop-shadow-sm"
+        sizes="(max-width: 640px) 56px, 80px"
+        priority
+      />
+    </div>
+  );
+}
+
 export function Header() {
   const { t, locale, setLocale } = useLanguage();
   const [open, setOpen] = useState(false);
@@ -43,11 +65,11 @@ export function Header() {
   const secondary = [{ href: "/contact", label: t.nav.contact }];
 
   return (
-    <header className="sticky top-0 z-50 bg-paper/95 backdrop-blur-md border-b border-rule">
+    <header className="sticky top-0 z-50 bg-paper/95 backdrop-blur-md border-b border-rule overflow-visible">
       {/* Thin prestige top band */}
       <div className="h-1 bg-fernent-red" aria-hidden />
 
-      <div className="mx-auto max-w-6xl px-3 sm:px-4">
+      <div className="mx-auto max-w-6xl px-3 sm:px-4 overflow-visible">
         {/* Dateline + lang */}
         <div className="flex items-center justify-between gap-3 pt-2.5 pb-1">
           <div className="flex items-center gap-3 min-w-0">
@@ -99,14 +121,11 @@ export function Header() {
           <div className="rule-double-inner" />
         </div>
 
-        <div className="flex items-center justify-center gap-2 sm:gap-4 py-3 sm:py-4">
-          <Image
-            src="/about/assane-samb.jpg"
+        {/* Extra top padding so sticker peek isn't clipped by sticky header */}
+        <div className="flex items-end sm:items-center justify-center gap-2 sm:gap-4 pt-5 pb-3 sm:pt-6 sm:pb-4 overflow-visible">
+          <MastheadPortrait
+            src="/about/masthead-assane.png"
             alt={t.histoire.assaneName}
-            width={64}
-            height={64}
-            className="h-12 w-12 sm:h-16 sm:w-16 rounded-full object-cover border border-rule-strong shrink-0"
-            sizes="(max-width: 640px) 48px, 64px"
           />
           <Link
             href="/"
@@ -118,13 +137,9 @@ export function Header() {
               « {t.motto} »
             </p>
           </Link>
-          <Image
-            src="/about/birane-gaye.jpg"
+          <MastheadPortrait
+            src="/about/masthead-birane.png"
             alt={t.histoire.biraneName}
-            width={64}
-            height={64}
-            className="h-12 w-12 sm:h-16 sm:w-16 rounded-full object-cover border border-rule-strong shrink-0"
-            sizes="(max-width: 640px) 48px, 64px"
           />
         </div>
 
