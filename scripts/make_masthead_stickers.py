@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 """Generate sticker-style masthead portraits matching Ferñent reference.
 
+All content (silhouette + white outline) stays INSIDE the red circle —
+no peek/overflow. Face is zoomed to fill the circle like a tight avatar;
+shoulders/chest fill the lower arc.
+
 Usage (from repo root, with /workspace/.venv-img):
   /workspace/.venv-img/bin/python scripts/make_masthead_stickers.py
 """
@@ -15,13 +19,13 @@ from rembg import new_session, remove
 
 FERNENT_RED = (225, 6, 0, 255)  # #E10600
 OUT_SIZE = 1024
-CIRCLE_DIAM = int(OUT_SIZE * 0.80)
+CIRCLE_DIAM = int(OUT_SIZE * 0.92)
 CIRCLE_CX = OUT_SIZE // 2
-CIRCLE_CY = int(OUT_SIZE * 0.58)
-OUTLINE_ITERS = 4
-SHADOW_BLUR = 14
-SHADOW_OFFSET = (5, 8)
-SHADOW_ALPHA = 100
+CIRCLE_CY = OUT_SIZE // 2
+OUTLINE_ITERS = 3
+SHADOW_BLUR = 10
+SHADOW_OFFSET = (3, 5)
+SHADOW_ALPHA = 80
 
 ABOUT = Path(__file__).resolve().parents[1] / "public" / "about"
 SOURCES = [
@@ -63,11 +67,28 @@ def crop_to_subject(rgba: Image.Image, pad: int = 2) -> Image.Image:
     return rgba.crop((x0, y0, x1, y1))
 
 
+def face_center_and_width(rgba: Image.Image) -> tuple[float, float]:
+    """Horizontal face center + head width from upper opaque span."""
+    a = np.array(rgba.split()[-1]) > 20
+    h, w = a.shape
+    row_w = a.sum(axis=1)
+    tops = np.where(row_w > max(3, int(w * 0.02)))[0]
+    if tops.size == 0:
+        return w / 2.0, w * 0.4
+    y_top = int(tops[0])
+    y1 = min(h - 1, y_top + max(8, int(h * 0.08)))
+    y2 = min(h - 1, y_top + max(16, int(h * 0.20)))
+    cols = np.where(a[y1 : y2 + 1].any(axis=0))[0]
+    if cols.size == 0:
+        return w / 2.0, w * 0.4
+    return float(cols[0] + cols[-1]) / 2.0, float(cols[-1] - cols[0] + 1)
+
+
 def dilate_alpha(alpha: Image.Image, iters: int) -> Image.Image:
     a = alpha
     for _ in range(iters):
-        a = a.filter(ImageFilter.MaxFilter(9))
-    a = a.filter(ImageFilter.GaussianBlur(1.5))
+        a = a.filter(ImageFilter.MaxFilter(7))
+    a = a.filter(ImageFilter.GaussianBlur(1.2))
     return a.point(lambda p: 255 if p > 48 else 0)
 
 
@@ -79,13 +100,46 @@ def multiply_alpha(rgba: Image.Image, mask: Image.Image) -> Image.Image:
     return Image.fromarray(out, mode="L")
 
 
+def fit_subject(cut: Image.Image, circle_r: int) -> tuple[Image.Image, int, int]:
+    """Scale + position: face large, bottom of bust on the lower arc."""
+    face_cx, face_w = face_center_and_width(cut)
+    outline_budget = OUTLINE_ITERS * 4 + 10
+    usable = float(circle_r * 2 - outline_budget * 2)
+
+    circle_top = CIRCLE_CY - circle_r
+    circle_bot = CIRCLE_CY + circle_r
+
+    # Fill disc height with overshoot so the lower arc is covered after clip.
+    scale = (usable * 1.18) / cut.height
+
+    # Ensure head is large enough for a tight avatar.
+    min_face = usable * 0.55
+    max_face = usable * 0.72
+    if face_w * scale < min_face:
+        scale = min_face / max(face_w, 1.0)
+    if face_w * scale > max_face:
+        scale = max_face / max(face_w, 1.0)
+
+    tw = max(1, int(round(cut.width * scale)))
+    th = max(1, int(round(cut.height * scale)))
+    cut = cut.resize((tw, th), Image.Resampling.LANCZOS)
+
+    paste_x = int(round(CIRCLE_CX - face_cx * scale))
+
+    # Bottom-align into the lower arc.
+    paste_y = circle_bot - cut.height + int(circle_r * 0.08)
+    min_y = circle_top + max(4, outline_budget // 3)
+    if paste_y < min_y:
+        paste_y = min_y
+
+    return cut, paste_x, paste_y
+
+
 def compose(cut: Image.Image, out_path: Path) -> None:
     cut = to_grayscale_keep_alpha(cut)
     cut = crop_to_subject(cut)
 
     circle_r = CIRCLE_DIAM // 2
-    circle_top = CIRCLE_CY - circle_r
-    circle_bot = CIRCLE_CY + circle_r
     circle_bbox = [
         CIRCLE_CX - circle_r,
         CIRCLE_CY - circle_r,
@@ -93,32 +147,7 @@ def compose(cut: Image.Image, out_path: Path) -> None:
         CIRCLE_CY + circle_r,
     ]
 
-    target_w = int(CIRCLE_DIAM * 0.90)
-    scale = target_w / cut.width
-    target_h = int(cut.height * scale)
-
-    peek_top = int(OUT_SIZE * 0.025)
-    desired_h = circle_bot - peek_top + int(OUT_SIZE * 0.02)
-    if target_h < desired_h * 0.92 or target_h > desired_h * 1.15:
-        scale = desired_h / cut.height
-        target_w = int(cut.width * scale)
-        target_h = int(cut.height * scale)
-
-    max_w = int(OUT_SIZE * 0.92)
-    if target_w > max_w:
-        scale = max_w / cut.width
-        target_w = int(cut.width * scale)
-        target_h = int(cut.height * scale)
-
-    cut = cut.resize((max(1, target_w), max(1, target_h)), Image.Resampling.LANCZOS)
-    paste_x = CIRCLE_CX - cut.width // 2
-    paste_y = peek_top
-
-    bottom = paste_y + cut.height
-    if bottom < circle_bot - 40:
-        shift = min(circle_bot - 20 - bottom, paste_y - int(OUT_SIZE * 0.02))
-        if shift > 0:
-            paste_y += shift
+    cut, paste_x, paste_y = fit_subject(cut, circle_r)
 
     canvas = Image.new("RGBA", (OUT_SIZE, OUT_SIZE), (0, 0, 0, 0))
 
@@ -148,12 +177,9 @@ def compose(cut: Image.Image, out_path: Path) -> None:
     sticker.paste(outline_img, (paste_x, paste_y), outline_img)
     sticker.paste(cut, (paste_x, paste_y), cut)
 
-    # Bottom of body clipped to red circle; head (and natural shoulder tops) peek above
+    # Strict circle clip — silhouette + white outline never peek outside.
     clip = Image.new("L", (OUT_SIZE, OUT_SIZE), 0)
-    d = ImageDraw.Draw(clip)
-    d.rectangle([0, 0, OUT_SIZE, circle_top], fill=255)
-    d.ellipse(circle_bbox, fill=255)
-
+    ImageDraw.Draw(clip).ellipse(circle_bbox, fill=255)
     sticker.putalpha(multiply_alpha(sticker, clip))
     sh_layer.putalpha(multiply_alpha(sh_layer, clip))
 
@@ -162,7 +188,7 @@ def compose(cut: Image.Image, out_path: Path) -> None:
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
     canvas.save(out_path, "PNG", optimize=True)
-    print(f"Wrote {out_path} size={canvas.size}")
+    print(f"Wrote {out_path.name} subject={cut.size} paste=({paste_x},{paste_y})")
 
 
 def main() -> None:
