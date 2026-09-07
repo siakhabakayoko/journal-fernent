@@ -6,15 +6,16 @@ type LogoProps = {
   priority?: boolean;
 };
 
+/** Red serif mensuel wordmark (public/logo-fernent.png). Stays red on light and dark. */
 export function Logo({ className = "", onDark = false, priority = false }: LogoProps) {
   return (
     <Image
       src="/logo-fernent.png"
       alt="Ferñent"
-      width={1023}
-      height={269}
+      width={2115}
+      height={318}
       priority={priority}
-      className={`object-contain ${onDark ? "brightness-0 invert" : ""} ${className}`.trim()}
+      className={`object-contain ${onDark ? "brightness-110" : ""} ${className}`.trim()}
     />
   );
 }
