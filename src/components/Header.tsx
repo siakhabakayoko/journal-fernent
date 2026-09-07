@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Logo } from "./Logo";
@@ -98,7 +99,15 @@ export function Header() {
           <div className="rule-double-inner" />
         </div>
 
-        <div className="flex items-center justify-center gap-3 py-3 sm:py-4">
+        <div className="flex items-center justify-center gap-2 sm:gap-4 py-3 sm:py-4">
+          <Image
+            src="/about/assane-samb.jpg"
+            alt={t.histoire.assaneName}
+            width={64}
+            height={64}
+            className="h-12 w-12 sm:h-16 sm:w-16 rounded-full object-cover border border-rule-strong shrink-0"
+            sizes="(max-width: 640px) 48px, 64px"
+          />
           <Link
             href="/"
             className="flex flex-col items-center text-center group min-w-0"
@@ -109,6 +118,14 @@ export function Header() {
               « {t.motto} »
             </p>
           </Link>
+          <Image
+            src="/about/birane-gaye.jpg"
+            alt={t.histoire.biraneName}
+            width={64}
+            height={64}
+            className="h-12 w-12 sm:h-16 sm:w-16 rounded-full object-cover border border-rule-strong shrink-0"
+            sizes="(max-width: 640px) 48px, 64px"
+          />
         </div>
 
         <div className="rule-double mb-0">
