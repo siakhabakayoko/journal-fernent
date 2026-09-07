@@ -121,17 +121,17 @@ export function Header() {
           <div className="rule-double-inner" />
         </div>
 
-        <div className="flex items-center justify-center gap-2 sm:gap-4 py-3 sm:py-4">
+        <div className="flex items-center justify-center gap-3 sm:gap-5 md:gap-6 px-1 sm:px-2 py-3 sm:py-4">
           <MastheadPortrait
             src="/about/masthead-assane.png"
             alt={t.histoire.assaneName}
           />
           <Link
             href="/"
-            className="flex flex-col items-center text-center group min-w-0"
+            className="flex min-w-0 flex-1 flex-col items-center text-center group mx-1 sm:mx-2"
             onClick={() => setOpen(false)}
           >
-            <Logo priority className="h-10 sm:h-14 w-auto max-w-[min(92vw,32rem)]" />
+            <Logo priority className="h-9 sm:h-14 w-auto max-w-[min(48vw,18rem)] sm:max-w-[min(70vw,28rem)]" />
             <p className="mt-2 max-w-xl text-[0.7rem] sm:text-xs text-muted italic leading-snug px-2">
               « {t.motto} »
             </p>
